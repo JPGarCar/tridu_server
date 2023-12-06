@@ -19,6 +19,14 @@ class Participant(models.Model):
         blank=True,
     )
 
+    race = models.ForeignKey(
+        to="race.Race", on_delete=models.PROTECT, related_name="participants"
+    )
+
+    race_type = models.ForeignKey(
+        to="race.RaceType", on_delete=models.PROTECT, related_name="participants"
+    )
+
     bib_number = models.IntegerField(db_index=True, unique=True)
     is_ftt = models.BooleanField(default=False, verbose_name="Is First Time Triathlete")
     team = models.CharField(max_length=255, verbose_name="Team Name")
