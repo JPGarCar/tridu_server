@@ -1,5 +1,6 @@
 from django.db import models
 
+from comments.models import Comment
 from tridu_server import settings
 
 
@@ -42,3 +43,13 @@ class Participant(models.Model):
 
     def __str__(self):
         return self.user.__str__()
+
+
+class ParticipantComment(Comment):
+    """
+    A comment in a Participant object.
+    """
+
+    participant = models.ForeignKey(
+        to=Participant, on_delete=models.CASCADE, related_name="comments"
+    )
