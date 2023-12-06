@@ -2,9 +2,10 @@ from django.db import models
 
 from comments.models import Comment
 from tridu_server import settings
+from tridu_server.models import ActiveModel
 
 
-class Participant(models.Model):
+class Participant(ActiveModel):
     """
     A participant will be part of the race. It holds participant only information,
     any other personal information can be found in the user model
