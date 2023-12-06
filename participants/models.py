@@ -11,6 +11,14 @@ class Participant(models.Model):
 
     user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
+    origin = models.ForeignKey(
+        to="locations.Location",
+        on_delete=models.PROTECT,
+        related_name="participants",
+        null=True,
+        blank=True,
+    )
+
     bib_number = models.IntegerField(db_index=True, unique=True)
     is_ftt = models.BooleanField(default=False, verbose_name="Is First Time Triathlete")
     team = models.CharField(max_length=255, verbose_name="Team Name")
