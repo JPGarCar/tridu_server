@@ -20,7 +20,10 @@ class User(AbstractUser):
         choices=Genders,
         default=Genders.UNDEFINED,
     )
-    date_of_birth = models.DateField()
+    date_of_birth = models.DateField(
+        null=True,
+        blank=True,
+    )
 
     def __str__(self):
         return self.username
