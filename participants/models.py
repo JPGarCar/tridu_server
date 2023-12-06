@@ -19,6 +19,14 @@ class Participant(models.Model):
         blank=True,
     )
 
+    heat = models.ForeignKey(
+        to="heats.Heat",
+        on_delete=models.PROTECT,
+        related_name="participants",
+        null=True,
+        blank=True,
+    )
+
     race = models.ForeignKey(
         to="race.Race", on_delete=models.PROTECT, related_name="participants"
     )
