@@ -41,6 +41,7 @@ class Participant(ActiveModel):
     is_ftt = models.BooleanField(default=False, verbose_name="Is First Time Triathlete")
     team = models.CharField(max_length=255, verbose_name="Team Name")
     swim_time = models.DurationField(null=True, blank=True)
+    date_changed = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.user.__str__()
