@@ -8,3 +8,4 @@ api = NinjaAPI(
 )
 
 api.add_router("/users/", "accounts.api.router")
+api.add_router("/participants/", "participants.api.router")
