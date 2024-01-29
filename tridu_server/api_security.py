@@ -12,11 +12,14 @@ class GlobalJWTAuth(HttpBearer):
     """
 
     def authenticate(self, request: HttpRequest, token: str) -> Optional[Any]:
-        user_and_token = JWTAuthentication().authenticate(request)
-        if user_and_token is not None:
-            user = user_and_token[0]
-            request.user = user
-            request.claims = user_and_token[1]
-            return user
-        else:
+        try:
+            user_and_token = JWTAuthentication().authenticate(request)
+            if user_and_token is not None:
+                user = user_and_token[0]
+                request.user = user
+                request.claims = user_and_token[1]
+                return user
+            else:
+                return None
+        except Exception as e:
             return None
