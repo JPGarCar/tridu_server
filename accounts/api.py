@@ -9,7 +9,16 @@ from accounts.schema import UserSchema
 router = Router()
 
 
-@router.get("/{username}", response={201: UserSchema, 204: None})
+@router.get("/{user_id}", response={201: UserSchema, 204: None})
+def get_user_by_id(request, user_id: int) -> UserSchema:
+    try:
+        user = User.objects.get(id=user_id)
+        return 201, user
+    except User.DoesNotExist:
+        return 204, None
+
+
+@router.get("/username/{username}", response={201: UserSchema, 204: None})
 def get_user_by_username(request, username: str):
     try:
         user = User.objects.get(username=username)
