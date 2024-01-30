@@ -19,3 +19,17 @@ class UserSchema(ModelSchema):
             "is_staff",
             "is_superuser",
         )
+
+
+class PatchUserSchema(ModelSchema):
+    class Meta:
+        model = User
+        fields = (
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "date_of_birth",
+            "gender",
+        )
+        fields_optional = "__all__"
