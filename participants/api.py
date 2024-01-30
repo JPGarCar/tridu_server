@@ -36,3 +36,21 @@ def get_participant_comments(request, participant_id: int):
         return 200, comments
     else:
         return 204, None
+
+
+@router.post(
+    "/{participant_id}/comments", tags=["participants"], response={201: bool, 500: str}
+)
+def create_participant_comment(
+    request, participant_id: int, commentSchema: ParticipantCommentCreateSchema
+):
+    comment = ParticipantComment.objects.create(
+        participant_id=participant_id,
+        comment=commentSchema.comment,
+        writer=request.user,
+    )
+
+    if comment:
+        return 201, True
+    else:
+        return 500, "There was an error creating a comment"
