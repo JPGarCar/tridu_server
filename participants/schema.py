@@ -20,6 +20,8 @@ class ParticipantSchema(ModelSchema):
             "is_ftt",
             "team",
             "swim_time",
+            "date_changed",
+            "is_active",
         )
 
 

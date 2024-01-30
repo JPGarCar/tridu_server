@@ -70,6 +70,30 @@ def update_participant(
     return 201, participant
 
 
+@router.patch(
+    "/{participant_id}/reactivate",
+    tags=["participants"],
+    response={201: ParticipantSchema},
+)
+def reactivate_participant(request, participant_id: int):
+    participant = get_object_or_404(Participant, pk=participant_id)
+    participant.activate()
+    participant.save()
+    return 201, participant
+
+
+@router.patch(
+    "/{participant_id}/deactivate",
+    tags=["participants"],
+    response={201: ParticipantSchema},
+)
+def deactivate_participant(request, participant_id: int):
+    participant = get_object_or_404(Participant, pk=participant_id)
+    participant.deactivate()
+    participant.save()
+    return 201, participant
+
+
 @router.get(
     "/{participant_id}/comments",
     tags=["participants"],
