@@ -3,6 +3,8 @@ from typing import List
 from django.shortcuts import get_object_or_404
 from ninja import Router, Form
 
+from heats.models import Heat
+from heats.schema import HeatSchema
 from locations.models import Location
 from participants.models import Participant, ParticipantComment
 from participants.schema import (
@@ -11,6 +13,8 @@ from participants.schema import (
     ParticipantCommentCreateSchema,
     PatchParticipantSchema,
 )
+from race.models import RaceType
+from race.schema import RaceTypeSchema
 
 router = Router()
 
@@ -79,6 +83,84 @@ def reactivate_participant(request, participant_id: int):
     participant = get_object_or_404(Participant, pk=participant_id)
     participant.activate()
     participant.save()
+    return 201, participant
+
+
+@router.patch(
+    "/{participant_id}/change_race_type",
+    tags=["participants"],
+    response={201: ParticipantSchema, 409: str},
+)
+def change_participant_race_type(
+    request, participant_id: int, race_type: RaceTypeSchema
+):
+    participant = get_object_or_404(Participant, pk=participant_id)
+
+    if participant.heat:
+        return (
+            409,
+            "Participant is in a heat. Please remove them from their heat first.",
+        )
+
+    new_race_type = RaceType.objects.filter(id=race_type.id).first()
+
+    if new_race_type is None:
+        return (
+            409,
+            "Race Type provided does not exist!",
+        )
+
+    participant.race_type = new_race_type
+    participant.save()
+
+    return 201, participant
+
+
+@router.patch(
+    "/{participant_id}/change_heat",
+    tags=["participants"],
+    response={201: ParticipantSchema, 409: str},
+)
+def change_participant_heat(request, participant_id: int, heat: HeatSchema):
+    participant = get_object_or_404(Participant, pk=participant_id)
+
+    if participant.heat:
+        return (
+            409,
+            "Participant is in a heat. Please remove them from their heat first.",
+        )
+
+    new_heat = Heat.objects.filter(id=heat.id).first()
+
+    if new_heat is None:
+        return (
+            409,
+            "Heat provided does not exist!",
+        )
+
+    participant.heat = new_heat
+    participant.save()
+
+    return 201, participant
+
+
+@router.patch(
+    "/{participant_id}/remove_heat",
+    tags=["participants"],
+    response={201: ParticipantSchema, 409: str},
+)
+def remove_participant_heat(request, participant_id: int):
+    participant = get_object_or_404(Participant, pk=participant_id)
+
+    if not participant.heat:
+        return (
+            409,
+            "Participant is not in a heat",
+        )
+
+    participant.heat = None
+    participant.save()
+
     return 201, participant
 
 

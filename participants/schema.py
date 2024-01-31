@@ -10,7 +10,7 @@ class ParticipantSchema(ModelSchema):
     origin: LocationSchema
     race: RaceSchema
     race_type: RaceTypeSchema
-    heat: HeatSchema
+    heat: HeatSchema | None
 
     class Meta:
         model = Participant
