@@ -206,3 +206,16 @@ def create_participant_comment(
         return 201, True
     else:
         return 500, "There was an error creating a comment"
+
+
+@router.delete(
+    "/comment/{comment_id}", tags=["participants"], response={200: None, 404: str}
+)
+def delete_participant_comment(request, comment_id: int):
+    comment = get_object_or_404(ParticipantComment, pk=comment_id)
+
+    if comment:
+        comment.delete()
+        return 200, None
+
+    return 404, "Could not find comment to delete."
