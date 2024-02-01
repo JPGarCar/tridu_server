@@ -35,6 +35,16 @@ def get_participants_for_user(request, user_id: int):
         return 204, None
 
 
+@router.get(
+    "/heat/{heat_id}",
+    tags=["participants", "heats"],
+    response={200: List[ParticipantSchema]},
+)
+def get_participants_for_heat(request, heat_id: int):
+    participants = Participant.objects.filter(heat_id=heat_id)
+    return 200, participants
+
+
 @router.patch(
     "/{participant_id}", tags=["participants"], response={201: ParticipantSchema}
 )
