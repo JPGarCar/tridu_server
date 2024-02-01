@@ -28,13 +28,20 @@ class HeatSchema(ModelSchema):
 
     class Meta:
         model = Heat
-        fields = ("id", "termination", "start_datetime", "color", "ideal_capacity")
+        fields = (
+            "id",
+            "termination",
+            "start_datetime",
+            "color",
+            "ideal_capacity",
+            "pool",
+        )
 
 
 class PatchHeatSchema(ModelSchema):
     class Meta:
         model = Heat
-        fields = ("termination", "start_datetime", "color", "ideal_capacity")
+        fields = ("termination", "start_datetime", "color", "ideal_capacity", "pool")
 
 
 class CreateHeatSchema(ModelSchema):
@@ -46,6 +53,7 @@ class CreateHeatSchema(ModelSchema):
             "start_datetime",
             "color",
             "ideal_capacity",
+            "pool",
             "race",
             "race_type",
         )

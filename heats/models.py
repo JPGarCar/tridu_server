@@ -2,6 +2,15 @@ from django.db import models
 
 
 class Heat(models.Model):
+
+    class Pools(models.TextChoices):
+        """
+        Choices for the pool field
+        """
+
+        RECREATION = "Recreation"
+        COMPETITIVE = "Competitive"
+
     race = models.ForeignKey(
         to="race.Race", on_delete=models.PROTECT, related_name="heats"
     )
@@ -18,6 +27,7 @@ class Heat(models.Model):
         max_length=7, verbose_name="HEX Color Code", help_text="Color hex code with #"
     )
     ideal_capacity = models.IntegerField(default=0)
+    pool = models.CharField(max_length=25, choices=Pools, default=Pools.RECREATION)
 
     def __str__(self):
         return "{} Heat Termination {}".format(
