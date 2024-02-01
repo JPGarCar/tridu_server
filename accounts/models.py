@@ -12,6 +12,7 @@ class User(AbstractUser):
         FEMALE = "F"
         NON_BINARY = "NB"
         UNDEFINED = "U"
+        GENDER_DIVERSE = "D"
 
     phone_number = models.CharField(max_length=20, null=True, blank=True)
 
