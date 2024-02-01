@@ -1,5 +1,6 @@
 from ninja import Field, ModelSchema
 
+from accounts.schema import UserSchema
 from heats.schema import HeatSchema
 from locations.schema import LocationSchema
 from participants.models import Participant, ParticipantComment
@@ -11,6 +12,7 @@ class ParticipantSchema(ModelSchema):
     race: RaceSchema
     race_type: RaceTypeSchema
     heat: HeatSchema | None
+    user: UserSchema
 
     class Meta:
         model = Participant
