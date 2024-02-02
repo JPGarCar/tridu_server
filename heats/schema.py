@@ -16,7 +16,9 @@ class HeatSchema(ModelSchema):
 
     @staticmethod
     def resolve_avg_swim_time(obj: Heat) -> datetime.timedelta:
-        return obj.participants.aggregate(Avg("swim_time"))["swim_time__avg"]
+        return obj.participants.aggregate(Avg("swim_time"))[
+            "swim_time__avg"
+        ] or datetime.timedelta(0)
 
     @staticmethod
     def resolve_participant_count(obj: Heat) -> int:
