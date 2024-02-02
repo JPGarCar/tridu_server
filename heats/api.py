@@ -35,6 +35,13 @@ def update_heat(request, heat_id: int, heatSchema: PatchHeatSchema):
 
 @router.post("/", tags=["heats"], response={201: HeatSchema})
 def create_heat(request, heat: CreateHeatSchema):
-    new_heat = Heat.objects.create(**heat.dict())
+    data = heat.dict()
 
+    race_id = data.pop("race", None)
+    race_type_id = data.pop("race_type", None)
+
+    data["race_id"] = race_id
+    data["race_type_id"] = race_type_id
+
+    new_heat = Heat.objects.create(**data)
     return 201, new_heat
