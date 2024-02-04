@@ -23,7 +23,7 @@ class Participant(ActiveModel):
 
     heat = models.ForeignKey(
         to="heats.Heat",
-        on_delete=models.PROTECT,
+        on_delete=models.SET_NULL,
         related_name="participants",
         null=True,
         blank=True,
