@@ -45,3 +45,10 @@ def create_heat(request, heat: CreateHeatSchema):
 
     new_heat = Heat.objects.create(**data)
     return 201, new_heat
+
+
+@router.delete("/{heat_id}", tags=["heats"], response={204: None})
+def delete_heat(request, heat_id: int):
+    heat = get_object_or_404(Heat, id=heat_id)
+    heat.delete()
+    return 204
