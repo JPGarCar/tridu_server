@@ -1,7 +1,8 @@
 from typing import List
 
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
-from ninja import Router, Form
+from ninja import Router
 
 from heats.models import Heat
 from heats.schema import HeatSchema
@@ -12,11 +13,53 @@ from participants.schema import (
     ParticipantCommentSchema,
     ParticipantCommentCreateSchema,
     PatchParticipantSchema,
+    CreateParticipantSchema,
 )
 from race.models import RaceType
 from race.schema import RaceTypeSchema
 
 router = Router()
+
+
+@router.post(
+    "/user/{user_id}/participants",
+    tags=["participants"],
+    response={201: ParticipantSchema, 400: str},
+)
+def create_participant(
+    request, user_id: int, participantSchema: CreateParticipantSchema
+):
+    data = participantSchema.dict(exclude_unset=True)
+
+    # get origin of Participant
+    origin_data = data.pop("origin")
+    origin = Location.objects.filter(
+        country=origin_data["country"],
+        province=origin_data["province"],
+        city=origin_data["city"],
+    ).first()
+    if origin is None:
+        origin = Location.objects.create(
+            country=origin_data["country"],
+            province=origin_data["province"],
+            city=origin_data["city"],
+        )
+
+    try:
+        participant, created = Participant.objects.get_or_create(
+            origin=origin,
+            bib_number=data["bib_number"],
+            is_ftt=data["is_ftt"],
+            team=data["team"],
+            swim_time=data["swim_time"],
+            race_id=data["race"],
+            race_type_id=data["race_type"],
+            user_id=user_id,
+        )
+    except IntegrityError as error:
+        return 400, error.__str__()
+
+    return 201, participant
 
 
 @router.get(
@@ -57,7 +100,7 @@ def update_participant(
 
     # update origin of Participant
     if "origin" in data:
-        origin_data = data.pop("origin", None)
+        origin_data = data.pop("origin")
         if (
             "country" in origin_data
             and "province" in origin_data

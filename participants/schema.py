@@ -27,6 +27,14 @@ class ParticipantSchema(ModelSchema):
         )
 
 
+class CreateParticipantSchema(ModelSchema):
+    origin: LocationSchema
+
+    class Meta:
+        model = Participant
+        fields = ("bib_number", "is_ftt", "team", "swim_time", "race", "race_type")
+
+
 class PatchParticipantSchema(ModelSchema):
     origin: LocationSchema
 

@@ -21,6 +21,19 @@ class UserSchema(ModelSchema):
         )
 
 
+class CreateUserSchema(ModelSchema):
+    class Meta:
+        model = User
+        fields = (
+            "first_name",
+            "last_name",
+            "email",
+            "phone_number",
+            "date_of_birth",
+            "gender",
+        )
+
+
 class PatchUserSchema(ModelSchema):
     class Meta:
         model = User

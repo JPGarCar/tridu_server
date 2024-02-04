@@ -6,7 +6,7 @@ from ninja import Router
 from ninja.pagination import paginate
 
 from accounts.models import User
-from accounts.schema import UserSchema, PatchUserSchema
+from accounts.schema import UserSchema, PatchUserSchema, CreateUserSchema
 
 router = Router()
 
@@ -27,6 +27,34 @@ def get_user_by_username(request, username: str):
         return 200, user
     except User.DoesNotExist:
         return 204, None
+
+
+@router.post("/", response={201: UserSchema})
+def create_user(request, userSchema: CreateUserSchema):
+    user_data = userSchema.dict()
+
+    # create username
+    username = (
+        user_data.get("first_name", "").replace(" ", "").lower()
+        + "."
+        + user_data.get("last_name", "").replace(" ", "").lower()
+    )
+
+    # try to find user by username
+    user = User.objects.filter(username=username).first()
+
+    if user is None:
+        user = User.objects.create_user(
+            username=username,
+            email=user_data.get("email", ""),
+            first_name=user_data.get("first_name", ""),
+            last_name=user_data.get("last_name", ""),
+            phone_number=user_data.get("phone_number", ""),
+            date_of_birth=user_data.get("date_of_birth", ""),
+            gender=user_data.get("gender", None),
+        )
+
+    return 201, user
 
 
 @router.patch("/{user_id}", response={201: UserSchema})
