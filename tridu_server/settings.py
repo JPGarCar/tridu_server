@@ -10,24 +10,31 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from datetime import timedelta
+from os.path import join
 from pathlib import Path
+
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+ENVIRONMENT = os.environ.get("ENV", "dev")
+if ENVIRONMENT == "prod":
+    load_dotenv(join(BASE_DIR, ".env.prod"))
+else:
+    load_dotenv(join(BASE_DIR, ".env"))
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-dc_jzmaagk+r&iew_u_#9(@kya1$d*x32ur%3r_$=citn+_iu0"
+SECRET_KEY = os.environ.get("SECRET_KEY", "Some very secret key!")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = int(os.environ.get("DEBUG", 1))
 
-ALLOWED_HOSTS = []
-
+ALLOWED_HOSTS = os.environ.get("ALLOWED_HOSTS", "localhost").split(",")
 
 # Application definition
 
@@ -87,12 +94,25 @@ AUTH_USER_MODEL = "accounts.User"
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+DATABASES = (
+    {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": os.environ.get("POSTGRES_DB"),
+            "USER": os.environ.get("POSTGRES_USER"),
+            "PASSWORD": os.environ.get("POSTGRES_PASSWORD"),
+            "HOST": os.environ.get("POSTGRES_HOST"),
+            "PORT": os.environ.get("POSTGRES_PORT"),
+        }
     }
-}
+    if int(os.environ.get("POSTGRES", 0))
+    else {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+)
 
 
 # Password validation
@@ -123,6 +143,8 @@ TIME_ZONE = "America/Vancouver"
 
 USE_I18N = True
 
+USE_L10N = True
+
 USE_TZ = True
 
 
@@ -137,8 +159,23 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=60),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
+
+SESSION_COOKIE_SECURE = int(os.environ.get("SESSION_COOKIE_SECURE", 0))
+CSRF_COOKIE_SECURE = int(os.environ.get("CSRF_COOKIE_SECURE", 0))
+SECURE_SSL_REDIRECT = int(os.environ.get("SECURE_SSL_REDIRECT", 0))
+if os.environ.get("SECURE_PROXY_HEADER", None) and os.environ.get(
+    "SECURE_PROXY_VALUE", None
+):
+    SECURE_PROXY_SSL_HEADER = (
+        os.environ.get("SECURE_PROXY_HEADER"),
+        os.environ.get("SECURE_PROXY_VALUE"),
+    )
+    SESSION_COOKIE_NAME = "__Secure-sessionid"
+    CSRF_COOKIE_NAME = "__Secure-csrftoken"
+    SESSION_COOKIE_SAMESITE = "None"
+    CSRF_COOKIE_SAMESITE = "None"
