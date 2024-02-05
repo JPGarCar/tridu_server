@@ -8,10 +8,10 @@ from race.schema import RaceSchema, RaceTypeSchema
 
 
 class ParticipantSchema(ModelSchema):
-    origin: LocationSchema
+    origin: LocationSchema | None = None
     race: RaceSchema
     race_type: RaceTypeSchema
-    heat: HeatSchema | None
+    heat: HeatSchema | None = None
     user: UserSchema
 
     class Meta:
@@ -25,6 +25,10 @@ class ParticipantSchema(ModelSchema):
             "date_changed",
             "is_active",
         )
+        fields_optional = (
+            "team",
+            "swim_time",
+        )
 
 
 class CreateParticipantSchema(ModelSchema):
@@ -33,6 +37,28 @@ class CreateParticipantSchema(ModelSchema):
     class Meta:
         model = Participant
         fields = ("bib_number", "is_ftt", "team", "swim_time", "race", "race_type")
+
+
+class CreateParticipantBulkSchema(ModelSchema):
+    city: str | None = None
+    country: str | None = None
+    province: str | None = None
+
+    class Meta:
+        model = Participant
+        fields = (
+            "bib_number",
+            "is_ftt",
+            "team",
+            "swim_time",
+            "race",
+            "race_type",
+            "user",
+        )
+        fields_optional = (
+            "team",
+            "swim_time",
+        )
 
 
 class PatchParticipantSchema(ModelSchema):

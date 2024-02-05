@@ -11,6 +11,16 @@ class Participant(ActiveModel):
     any other personal information can be found in the user model
     """
 
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "race"], name="unique_race_for_user"
+            ),
+            models.UniqueConstraint(
+                fields=["bib_number", "race"], name="unique_race_for_bib_number"
+            ),
+        ]
+
     user = models.ForeignKey(to=settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
 
     origin = models.ForeignKey(
@@ -37,9 +47,11 @@ class Participant(ActiveModel):
         to="race.RaceType", on_delete=models.PROTECT, related_name="participants"
     )
 
-    bib_number = models.IntegerField(db_index=True, unique=True)
+    bib_number = models.IntegerField(db_index=True)
     is_ftt = models.BooleanField(default=False, verbose_name="Is First Time Triathlete")
-    team = models.CharField(max_length=255, verbose_name="Team Name")
+    team = models.CharField(
+        max_length=255, verbose_name="Team Name", null=True, blank=True
+    )
     swim_time = models.DurationField(null=True, blank=True)
     date_changed = models.DateTimeField(auto_now=True)
 

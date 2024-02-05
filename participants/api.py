@@ -14,9 +14,11 @@ from participants.schema import (
     ParticipantCommentCreateSchema,
     PatchParticipantSchema,
     CreateParticipantSchema,
+    CreateParticipantBulkSchema,
 )
 from race.models import RaceType
 from race.schema import RaceTypeSchema
+from tridu_server.schemas import BulkCreateResponseSchema
 
 router = Router()
 
@@ -88,43 +90,65 @@ def get_participants_for_heat(request, heat_id: int):
     return 200, participants
 
 
-@router.patch(
-    "/{participant_id}", tags=["participants"], response={201: ParticipantSchema}
-)
-def update_participant(
-    request, participant_id: int, participantSchema: PatchParticipantSchema
+@router.post("/bulk", tags=["participants"], response={201: BulkCreateResponseSchema})
+def create_participant_bulk(
+    request, participantSchemas: List[CreateParticipantBulkSchema]
 ):
-    participant = get_object_or_404(Participant, pk=participant_id)
+    created = 0
+    duplicates = 0
+    errors = []
+    items = []
 
-    data = participantSchema.dict(exclude_unset=True)
+    for participantSchema in participantSchemas:
+        data = participantSchema.dict(exclude_unset=True)
 
-    # update origin of Participant
-    if "origin" in data:
-        origin_data = data.pop("origin")
-        if (
-            "country" in origin_data
-            and "province" in origin_data
-            and "city" in origin_data
-        ):
-            origin = Location.objects.filter(
-                country=origin_data["country"],
-                province=origin_data["province"],
-                city=origin_data["city"],
-            ).first()
-            if origin is None:
-                origin = Location.objects.create(
-                    country=origin_data["country"],
-                    province=origin_data["province"],
-                    city=origin_data["city"],
+        origin = None
+        if "city" in data and "country" in data and "province" in data:
+            # get origin of Participant
+            city = data.pop("city")
+            country = data.pop("country")
+            province = data.pop("province")
+            if province and country and city:
+                origin, isNewOrigin = Location.objects.get_or_create(
+                    city=city, country=country, province=province
                 )
-            participant.origin = origin
 
-    # update participant values
-    for key, value in data.items():
-        setattr(participant, key, value)
+        try:
+            participant, isNew = Participant.objects.get_or_create(
+                origin_id=origin.id if origin is not None else None,
+                bib_number=data["bib_number"],
+                is_ftt=data["is_ftt"],
+                team=data.get("team", ""),
+                swim_time=data.get("swim_time", ""),
+                race_id=data["race"],
+                race_type_id=data["race_type"],
+                user_id=data["user"],
+            )
 
-    participant.save()
-    return 201, participant
+            if isNew:
+                created += 1
+            else:
+                duplicates += 1
+
+            items.append(ParticipantSchema.from_orm(participant).model_dump_json())
+        except Exception as e:
+            errors.append(e.__str__())
+
+    return 201, {
+        "created": created,
+        "duplicates": duplicates,
+        "errors": errors,
+        "items": items,
+        "message": (
+            "{} participants created, {} were already found, no errors encountered.".format(
+                created, duplicates
+            )
+            if len(errors) == 0
+            else "{} participants created, {} were already found but {} errors encountered!".format(
+                created, duplicates, len(errors)
+            )
+        ),
+    }
 
 
 @router.patch(
@@ -259,6 +283,45 @@ def create_participant_comment(
         return 201, True
     else:
         return 500, "There was an error creating a comment"
+
+
+@router.patch(
+    "/{participant_id}", tags=["participants"], response={201: ParticipantSchema}
+)
+def update_participant(
+    request, participant_id: int, participantSchema: PatchParticipantSchema
+):
+    participant = get_object_or_404(Participant, pk=participant_id)
+
+    data = participantSchema.dict(exclude_unset=True)
+
+    # update origin of Participant
+    if "origin" in data:
+        origin_data = data.pop("origin")
+        if (
+            "country" in origin_data
+            and "province" in origin_data
+            and "city" in origin_data
+        ):
+            origin = Location.objects.filter(
+                country=origin_data["country"],
+                province=origin_data["province"],
+                city=origin_data["city"],
+            ).first()
+            if origin is None:
+                origin = Location.objects.create(
+                    country=origin_data["country"],
+                    province=origin_data["province"],
+                    city=origin_data["city"],
+                )
+            participant.origin = origin
+
+    # update participant values
+    for key, value in data.items():
+        setattr(participant, key, value)
+
+    participant.save()
+    return 201, participant
 
 
 @router.delete(
