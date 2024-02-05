@@ -9,6 +9,12 @@ class RaceSchema(ModelSchema):
         fields = ("id", "name", "date_created")
 
 
+class CreateRaceSchema(ModelSchema):
+    class Meta:
+        model = Race
+        fields = ("name",)
+
+
 class RaceTypeSchema(ModelSchema):
     class Meta:
         model = RaceType
