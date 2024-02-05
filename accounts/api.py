@@ -59,17 +59,22 @@ def create_users_bulk(request, userSchemas: List[CreateUserSchema]):
         )
 
         try:
-            user, isNew = User.objects.get_or_create(
-                username=username,
-                email=user_data.get("email", ""),
-                first_name=user_data.get("first_name", ""),
-                last_name=user_data.get("last_name", ""),
-                phone_number=user_data.get("phone_number", ""),
-                date_of_birth=user_data.get("date_of_birth", ""),
-                gender=user_data.get("gender", None),
-            )
+            try:
+                user = User.objects.get(username=username)
+                is_new = False
+            except User.DoesNotExist:
+                user = User.objects.create(
+                    username=username,
+                    email=user_data.get("email", ""),
+                    first_name=user_data.get("first_name", ""),
+                    last_name=user_data.get("last_name", ""),
+                    phone_number=user_data.get("phone_number", ""),
+                    date_of_birth=user_data.get("date_of_birth", ""),
+                    gender=user_data.get("gender", None),
+                )
+                is_new = True
 
-            if isNew:
+            if is_new:
                 created += 1
             else:
                 duplicates += 1
