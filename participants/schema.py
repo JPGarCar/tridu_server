@@ -57,6 +57,7 @@ class CreateParticipantBulkSchema(ModelSchema):
     city: str | None = None
     country: str | None = None
     province: str | None = None
+    swim_time: str | None = None
 
     class Meta:
         model = Participant
@@ -64,13 +65,12 @@ class CreateParticipantBulkSchema(ModelSchema):
             "bib_number",
             "is_ftt",
             "team",
-            "swim_time",
             "race",
             "race_type",
             "user",
             "location",
         )
-        fields_optional = ("team", "swim_time", "location")
+        fields_optional = ("team", "location")
 
 
 class PatchParticipantSchema(ModelSchema):

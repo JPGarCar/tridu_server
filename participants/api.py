@@ -118,12 +118,18 @@ def create_participant_bulk(
             location = data.get("location", "")
             if location == "N/A" or location == "n/a":
                 location = None
+
+            # TODO add check on syntax of swim_time
+            swim_time_str = data.get("swim_time", "").strip()
+            minutes = swim_time_str.split(":")[0]
+            seconds = swim_time_str.split(":")[1]
+            swim_time = datetime.timedelta(seconds=int(seconds), minutes=int(minutes))
             participant, isNew = Participant.objects.get_or_create(
                 origin_id=origin.id if origin is not None else None,
                 bib_number=data["bib_number"],
                 is_ftt=data["is_ftt"],
                 team=data.get("team", ""),
-                swim_time=data.get("swim_time", ""),
+                swim_time=swim_time,
                 race_id=data["race"],
                 race_type_id=data["race_type"],
                 user_id=data["user"],
