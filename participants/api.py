@@ -129,7 +129,7 @@ def create_participant_bulk(
                     race_type_id=data["race_type"],
                     user_id=data["user"],
                 )
-                participant.swim_time = (swim_time,)
+                participant.swim_time = swim_time
                 participant.location = data.get("location", "")
                 participant.team = data.get("team", "")
                 participant.origin_id = origin.id if origin is not None else None
