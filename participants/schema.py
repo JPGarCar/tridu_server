@@ -24,6 +24,7 @@ class ParticipantSchema(ModelSchema):
             "swim_time",
             "date_changed",
             "is_active",
+            "location",
         )
         fields_optional = (
             "team",
@@ -32,11 +33,24 @@ class ParticipantSchema(ModelSchema):
 
 
 class CreateParticipantSchema(ModelSchema):
-    origin: LocationSchema
+    origin: LocationSchema | None = None
 
     class Meta:
         model = Participant
-        fields = ("bib_number", "is_ftt", "team", "swim_time", "race", "race_type")
+        fields = (
+            "bib_number",
+            "is_ftt",
+            "team",
+            "swim_time",
+            "race",
+            "race_type",
+            "location",
+        )
+        fields_optional = (
+            "swim_time",
+            "team",
+            "location",
+        )
 
 
 class CreateParticipantBulkSchema(ModelSchema):
@@ -54,11 +68,9 @@ class CreateParticipantBulkSchema(ModelSchema):
             "race",
             "race_type",
             "user",
+            "location",
         )
-        fields_optional = (
-            "team",
-            "swim_time",
-        )
+        fields_optional = ("team", "swim_time", "location")
 
 
 class PatchParticipantSchema(ModelSchema):
@@ -66,7 +78,7 @@ class PatchParticipantSchema(ModelSchema):
 
     class Meta:
         model = Participant
-        fields = ("id", "bib_number", "is_ftt", "team", "swim_time")
+        fields = ("id", "bib_number", "is_ftt", "team", "swim_time", "location")
         fields_optional = "__all__"
 
 

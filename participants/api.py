@@ -123,6 +123,7 @@ def create_participant_bulk(
                 race_id=data["race"],
                 race_type_id=data["race_type"],
                 user_id=data["user"],
+                location=data.get("location", ""),
             )
 
             if isNew:

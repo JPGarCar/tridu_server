@@ -54,6 +54,7 @@ class Participant(ActiveModel):
     )
     swim_time = models.DurationField(null=True, blank=True)
     date_changed = models.DateTimeField(auto_now=True)
+    location = models.CharField(max_length=256, default="")
 
     def __str__(self):
         return self.user.__str__()
