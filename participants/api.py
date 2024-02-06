@@ -99,7 +99,7 @@ def create_participant_bulk(
     duplicates = 0
     errors = []
     items = []
-    count = 1
+    count = 2  # excel starts at 2
 
     for participantSchema in participantSchemas:
         data = participantSchema.dict(exclude_unset=True)
