@@ -98,6 +98,7 @@ def create_participant_bulk(
     duplicates = 0
     errors = []
     items = []
+    count = 1
 
     for participantSchema in participantSchemas:
         data = participantSchema.dict(exclude_unset=True)
@@ -133,7 +134,9 @@ def create_participant_bulk(
 
             items.append(ParticipantSchema.from_orm(participant).model_dump_json())
         except Exception as e:
-            errors.append(e.__str__())
+            errors.append("For row {}, error {}".format(count, e.__str__()))
+
+        count = count + 1
 
     return 201, {
         "created": created,
