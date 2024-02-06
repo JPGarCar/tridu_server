@@ -121,23 +121,33 @@ def create_participant_bulk(
             minutes = swim_time_str.split(":")[0]
             seconds = swim_time_str.split(":")[1]
             swim_time = datetime.timedelta(seconds=int(seconds), minutes=int(minutes))
-            participant, isNew = Participant.objects.get_or_create(
-                origin_id=origin.id if origin is not None else None,
-                bib_number=data["bib_number"],
-                is_ftt=data["is_ftt"],
-                team=data.get("team", ""),
-                swim_time=swim_time,
-                race_id=data["race"],
-                race_type_id=data["race_type"],
-                user_id=data["user"],
-                location=data.get("location", ""),
-            )
 
-            if isNew:
-                created += 1
-            else:
+            try:
+                participant = Participant.objects.get(
+                    bib_number=data["bib_number"],
+                    race_id=data["race"],
+                    race_type_id=data["race_type"],
+                    user_id=data["user"],
+                )
+                participant.swim_time = (swim_time,)
+                participant.location = data.get("location", "")
+                participant.team = data.get("team", "")
+                participant.origin_id = origin.id if origin is not None else None
+                participant.save()
                 duplicates += 1
-
+            except Participant.DoesNotExist:
+                participant = Participant.objects.create(
+                    origin_id=origin.id if origin is not None else None,
+                    bib_number=data["bib_number"],
+                    is_ftt=data["is_ftt"],
+                    team=data.get("team", ""),
+                    swim_time=swim_time,
+                    race_id=data["race"],
+                    race_type_id=data["race_type"],
+                    user_id=data["user"],
+                    location=data.get("location", ""),
+                )
+                created += 1
             items.append(ParticipantSchema.from_orm(participant).model_dump_json())
         except Exception as e:
             errors.append("For row {}, error {}".format(count, e.__str__()))
