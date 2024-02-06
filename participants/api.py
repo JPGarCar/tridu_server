@@ -116,10 +116,6 @@ def create_participant_bulk(
                 )
 
         try:
-            location = data.get("location", "")
-            if location == "N/A" or location == "n/a":
-                location = None
-
             # TODO add check on syntax of swim_time
             swim_time_str = data.get("swim_time", "").strip()
             minutes = swim_time_str.split(":")[0]
@@ -134,7 +130,7 @@ def create_participant_bulk(
                 race_id=data["race"],
                 race_type_id=data["race_type"],
                 user_id=data["user"],
-                location=location,
+                location=data.get("location", ""),
             )
 
             if isNew:

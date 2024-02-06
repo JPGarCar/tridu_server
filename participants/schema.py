@@ -26,10 +26,7 @@ class ParticipantSchema(ModelSchema):
             "is_active",
             "location",
         )
-        fields_optional = (
-            "team",
-            "swim_time",
-        )
+        fields_optional = ("team", "swim_time", "location")
 
 
 class CreateParticipantSchema(ModelSchema):
