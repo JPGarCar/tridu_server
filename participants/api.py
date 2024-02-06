@@ -115,6 +115,9 @@ def create_participant_bulk(
                 )
 
         try:
+            location = data.get("location", "")
+            if location == "N/A" or location == "n/a":
+                location = None
             participant, isNew = Participant.objects.get_or_create(
                 origin_id=origin.id if origin is not None else None,
                 bib_number=data["bib_number"],
@@ -124,7 +127,7 @@ def create_participant_bulk(
                 race_id=data["race"],
                 race_type_id=data["race_type"],
                 user_id=data["user"],
-                location=data.get("location", ""),
+                location=location,
             )
 
             if isNew:
