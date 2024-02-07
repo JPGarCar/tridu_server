@@ -100,6 +100,23 @@ def create_users_bulk(request, userSchemas: List[CreateUserSchema]):
     }
 
 
+@router.post("/action/clean_gender", response={200: str, 403: str})
+def admin_action_clean_gender(request):
+    if not request.user.is_staff and not request.user.is_superuser:
+        return 403, "You must be an admin to access this action"
+
+    num_updated = 0
+
+    num_updated += User.objects.filter(gender__in=["W", "Woman", "Female"]).update(
+        gender="F"
+    )
+    num_updated += User.objects.filter(gender__in=["Man", "Male", "Man"]).update(
+        gender="M"
+    )
+
+    return 200, "Action complete, {} instances updated".format(num_updated)
+
+
 @router.get("/{user_id}", response={200: UserSchema, 204: None})
 def get_user_by_id(request, user_id: int) -> UserSchema:
     try:
