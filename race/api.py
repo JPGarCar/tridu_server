@@ -1,11 +1,18 @@
 from typing import List
 
+from django.shortcuts import get_object_or_404
 from ninja import Router
 
 from participants.models import Participant
 from participants.schema import ParticipantSchema
 from race.models import RaceType, Race
-from race.schema import RaceTypeSchema, RaceSchema, CreateRaceSchema, RaceTypeStatSchema
+from race.schema import (
+    RaceTypeSchema,
+    RaceSchema,
+    CreateRaceSchema,
+    RaceTypeStatSchema,
+    CreateRaceTypeSchema,
+)
 
 router = Router()
 
@@ -20,7 +27,7 @@ def get_race_types(request):
     tags=["racetypes"],
     response={201: RaceTypeSchema, 409: RaceTypeSchema},
 )
-def create_race_type(request, race_type_schema: RaceTypeSchema):
+def create_race_type(request, race_type_schema: CreateRaceTypeSchema):
     race_type, created = RaceType.objects.get_or_create(**race_type_schema.dict())
     if created:
         return 201, race_type
@@ -28,7 +35,25 @@ def create_race_type(request, race_type_schema: RaceTypeSchema):
         return 409, race_type
 
 
-@router.delete("/racetypes/{id}", tags=["racetypes"], response={204: None, 404: str})
+@router.patch(
+    "/racetypes/{race_type_id}/update",
+    tags=["racetypes"],
+    response={201: RaceTypeSchema, 404: str},
+)
+def update_race_type(
+    request, race_type_id: int, race_type_schema: CreateRaceTypeSchema
+):
+    race_type = get_object_or_404(RaceType, id=race_type_id)
+
+    for key, value in race_type_schema.dict().items():
+        setattr(race_type, key, value)
+    race_type.save()
+    return 201, race_type
+
+
+@router.delete(
+    "/racetypes/{id}/delete", tags=["racetypes"], response={204: None, 404: str}
+)
 def delete_race(request, id: int):
     try:
         race = RaceType.objects.get(id=id)

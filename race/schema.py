@@ -18,13 +18,13 @@ class CreateRaceSchema(ModelSchema):
 class RaceTypeSchema(ModelSchema):
     class Meta:
         model = RaceType
-        fields = ("id", "name")
+        fields = ("id", "name", "participants_allowed", "ftt_allowed")
 
 
 class CreateRaceTypeSchema(ModelSchema):
     class Meta:
         model = RaceType
-        fields = ("name",)
+        fields = ("name", "participants_allowed", "ftt_allowed")
 
 
 class RaceTypeStatSchema(Schema):
