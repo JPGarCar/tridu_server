@@ -1,6 +1,7 @@
 from django.db import models
 
 from comments.models import Comment
+from participants.querysets import ParticipantQuerySet
 from tridu_server import settings
 from tridu_server.models import ActiveModel
 
@@ -10,6 +11,8 @@ class Participant(ActiveModel):
     A participant will be part of the race. It holds participant only information,
     any other personal information can be found in the user model
     """
+
+    objects = ParticipantQuerySet.as_manager()
 
     class Meta:
         constraints = [

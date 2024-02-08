@@ -31,13 +31,13 @@ def get_active_non_staff_users(request, name: str = ""):
     return users
 
 
-@router.get("/username/{username}", response={200: UserSchema, 204: None})
+@router.get("/username/{username}", response={200: UserSchema, 404: str})
 def get_user_by_username(request, username: str):
     try:
         user = User.objects.get(username=username)
         return 200, user
     except User.DoesNotExist:
-        return 204, None
+        return 404, "User not found."
 
 
 @router.post("/bulk", response={201: BulkCreateResponseSchema})
@@ -117,13 +117,13 @@ def admin_action_clean_gender(request):
     return 200, "Action complete, {} instances updated".format(num_updated)
 
 
-@router.get("/{user_id}", response={200: UserSchema, 204: None})
+@router.get("/{user_id}", response={200: UserSchema, 404: str})
 def get_user_by_id(request, user_id: int) -> UserSchema:
     try:
         user = User.objects.get(id=user_id)
         return 200, user
     except User.DoesNotExist:
-        return 204, None
+        return 404, "User not found."
 
 
 @router.patch("/{user_id}", response={201: UserSchema})

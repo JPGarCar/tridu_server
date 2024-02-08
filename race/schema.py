@@ -1,4 +1,4 @@
-from ninja import ModelSchema
+from ninja import ModelSchema, Schema
 
 from race.models import Race, RaceType
 
@@ -25,3 +25,11 @@ class CreateRaceTypeSchema(ModelSchema):
     class Meta:
         model = RaceType
         fields = ("name",)
+
+
+class RaceTypeStatSchema(Schema):
+    race_type: RaceTypeSchema
+    registered: int
+    allowed: int
+    ftt_registered: int
+    ftt_allowed: int

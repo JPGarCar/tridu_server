@@ -1,6 +1,7 @@
 import datetime
 from typing import List
 
+from django.core.exceptions import ValidationError
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from ninja import Router
@@ -116,10 +117,13 @@ def create_participant_bulk(
                 )
 
         try:
-            # TODO add check on syntax of swim_time
-            swim_time_str = data.get("swim_time", "").strip()
-            minutes = swim_time_str.split(":")[0]
-            seconds = swim_time_str.split(":")[1]
+            swim_time_values = data.get("swim_time", "").strip().split(":")
+            if len(swim_time_values) != 2:
+                raise ValidationError("Invalid swim_time, not in formation MM:SS")
+            minutes = swim_time_values[0]
+            seconds = swim_time_values[1]
+            if not minutes.isnumeric() or not seconds.isnumeric():
+                raise ValidationError("Invalid swim_time, not in formation MM:SS")
             swim_time = datetime.timedelta(seconds=int(seconds), minutes=int(minutes))
 
             try:
@@ -169,6 +173,35 @@ def create_participant_bulk(
             )
         ),
     }
+
+
+@router.get(
+    "/invalid/swim_time/race/{race_id}",
+    tags=["participants"],
+    response={200: List[ParticipantSchema]},
+)
+def participants_with_invalid_swim_time(request, race_id: int):
+    return 200, Participant.objects.for_race_id(race_id).with_invalid_swim_time()
+
+
+@router.get(
+    "/recent_edits", tags=["participants"], response={200: List[ParticipantSchema]}
+)
+def recent_participant_edits(request, count: int = 5):
+    return 200, Participant.objects.order_by("-date_changed").all()[:count]
+
+
+@router.delete(
+    "/comment/{comment_id}", tags=["participants"], response={200: None, 404: str}
+)
+def delete_participant_comment(request, comment_id: int):
+    comment = get_object_or_404(ParticipantComment, pk=comment_id)
+
+    if comment:
+        comment.delete()
+        return 200, None
+
+    return 404, "Could not find comment to delete."
 
 
 @router.patch(
@@ -305,6 +338,18 @@ def create_participant_comment(
         return 500, "There was an error creating a comment"
 
 
+@router.get(
+    "/{participant_id}",
+    tags=["participants"],
+    response={200: ParticipantSchema, 404: str},
+)
+def get_participant_details(request, participant_id: int):
+    try:
+        return 200, Participant.objects.get(id=participant_id)
+    except Participant.DoesNotExist:
+        return 404, "Participant not found"
+
+
 @router.patch(
     "/{participant_id}", tags=["participants"], response={201: ParticipantSchema}
 )
@@ -342,16 +387,3 @@ def update_participant(
 
     participant.save()
     return 201, participant
-
-
-@router.delete(
-    "/comment/{comment_id}", tags=["participants"], response={200: None, 404: str}
-)
-def delete_participant_comment(request, comment_id: int):
-    comment = get_object_or_404(ParticipantComment, pk=comment_id)
-
-    if comment:
-        comment.delete()
-        return 200, None
-
-    return 404, "Could not find comment to delete."
