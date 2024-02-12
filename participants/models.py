@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q
 
 from comments.models import Comment
 from participants.querysets import ParticipantQuerySet
@@ -17,10 +18,15 @@ class Participant(ActiveModel):
     class Meta:
         constraints = [
             models.UniqueConstraint(
-                fields=["user", "race"], name="unique_race_for_user"
+                fields=["user", "race"],
+                name="unique_race_for_user",
+                violation_error_message="This user is already registered for this race!",
             ),
             models.UniqueConstraint(
-                fields=["bib_number", "race"], name="unique_race_for_bib_number"
+                fields=["bib_number", "race"],
+                condition=Q(is_active=True),
+                name="unique_race_for_bib_number",
+                violation_error_message="Another active participant is already using this bib number.",
             ),
         ]
 

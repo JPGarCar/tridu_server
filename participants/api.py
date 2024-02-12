@@ -207,13 +207,18 @@ def delete_participant_comment(request, comment_id: int):
 @router.patch(
     "/{participant_id}/reactivate",
     tags=["participants"],
-    response={201: ParticipantSchema},
+    response={201: ParticipantSchema, 409: List[str]},
 )
 def reactivate_participant(request, participant_id: int):
     participant = get_object_or_404(Participant, pk=participant_id)
     participant.activate()
-    participant.save()
-    return 201, participant
+
+    try:
+        participant.validate_constraints()
+        participant.save()
+        return 201, participant
+    except ValidationError as e:
+        return 409, e.messages
 
 
 @router.patch(
@@ -351,7 +356,9 @@ def get_participant_details(request, participant_id: int):
 
 
 @router.patch(
-    "/{participant_id}", tags=["participants"], response={201: ParticipantSchema}
+    "/{participant_id}/edit",
+    tags=["participants"],
+    response={201: ParticipantSchema, 409: List[str], 404: str},
 )
 def update_participant(
     request, participant_id: int, participantSchema: PatchParticipantSchema
@@ -384,6 +391,11 @@ def update_participant(
     # update participant values
     for key, value in data.items():
         setattr(participant, key, value)
+
+    try:
+        participant.validate_constraints()
+    except ValidationError as e:
+        return 409, e.messages
 
     participant.save()
     return 201, participant

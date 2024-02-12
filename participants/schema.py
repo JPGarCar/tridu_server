@@ -71,7 +71,7 @@ class CreateParticipantBulkSchema(ModelSchema):
 
 
 class PatchParticipantSchema(ModelSchema):
-    origin: LocationSchema
+    origin: LocationSchema | None = None
 
     class Meta:
         model = Participant
