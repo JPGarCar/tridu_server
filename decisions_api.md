@@ -13,6 +13,27 @@ API schema names should follow this convention:
 - Always append "Schema" at the end of all schemas
 
 ---
+### Error Object Response
+As per [RFC 7807](https://www.rfc-editor.org/rfc/rfc7807), whenever we have an error, either 4xx or 5xx
+we will return the correct error code with this Error Object. We have decided this because:
+- we are building a REST JSON api, all responses should be JSON objects for consistency
+- the object below is well known and referenced in an RFC
+- provides a way to add more information to errors in the future for clients to use without braking changes
+
+The error object will be as follows:
+
+```json
+{
+  "title": "A short, human readable summary of the problem. Should not change between different occurrences.",
+  "status": 500, // the status code
+  "detail": "a human readable explanation specific to this occurrence of the problem."
+}
+```
+
+If we ever want to add more information to the Error Object, we can!
+The Error Object can be found in `tridu_server/schemas.py`.
+
+---
 ### Delete Methods Response
 
 Delete methods respond either:
