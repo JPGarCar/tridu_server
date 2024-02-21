@@ -153,3 +153,15 @@ def delete_race(request, race_id: int):
         return 404, ErrorObjectSchema.from_404_error(
             details="Race with id {} does not exist".format(race_id)
         )
+
+
+@router.get(
+    "/{race_id}", tags=["races"], response={200: RaceSchema, 404: ErrorObjectSchema}
+)
+def get_race(request, race_id: int):
+    try:
+        return 200, Race.objects.get(id=race_id)
+    except Race.DoesNotExist:
+        return 404, ErrorObjectSchema.from_404_error(
+            details="Race with id {} does not exist".format(race_id)
+        )
