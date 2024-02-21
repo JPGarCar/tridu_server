@@ -3,6 +3,7 @@ from typing import List
 
 from django.core.exceptions import ValidationError
 from ninja import Router
+from ninja.pagination import paginate
 
 from heats.models import Heat
 from heats.schema import HeatSchema
@@ -183,13 +184,14 @@ def participants_with_invalid_swim_time(request, race_id: int):
 @router.get(
     "/race/{race_id}", tags=["participants"], response={200: List[ParticipantSchema]}
 )
+@paginate
 def get_participants_for_race(request, race_id: int, bib_number: int = None):
     participants = Participant.objects.for_race_id(race_id=race_id)
 
     if bib_number is not None:
         participants = participants.filter(bib_number__regex=r"{}".format(bib_number))
 
-    return 200, participants
+    return participants
 
 
 @router.get(
