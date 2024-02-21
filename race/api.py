@@ -1,5 +1,6 @@
 from typing import List
 
+from django.db.models import Min, Max, Count
 from ninja import Router
 
 from participants.models import Participant
@@ -11,6 +12,7 @@ from race.schema import (
     CreateRaceSchema,
     RaceTypeStatSchema,
     CreateRaceTypeSchema,
+    RaceTypeBibInfoSchema,
 )
 from tridu_server.schemas import ErrorObjectSchema
 
@@ -140,6 +142,19 @@ def get_race_stats(request, race_id: int):
 )
 def race_participants_disabled(request, race_id: int):
     return 200, Participant.objects.inactive().for_race_id(race_id)
+
+
+@router.get(
+    "/{race_id}/racetypes/bib_info",
+    tags=["racetypes"],
+    response={200: List[RaceTypeBibInfoSchema]},
+)
+def get_race_types_bib_info_for_race(request, race_id: int):
+    return 200, RaceType.objects.for_race(race_id).annotate(
+        smallest_bib=Min("participants__bib_number"),
+        largest_bib=Max("participants__bib_number"),
+        count=Count("participants__bib_number"),
+    )
 
 
 @router.delete(

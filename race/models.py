@@ -2,6 +2,7 @@ import datetime
 
 from django.db import models
 
+from race.querysets import RaceTypeQuerySet
 from tridu_server.models import ActiveModel
 
 
@@ -21,6 +22,8 @@ class RaceType(ActiveModel):
     """
     The types of races there are.
     """
+
+    objects = RaceTypeQuerySet.as_manager()
 
     name = models.CharField(max_length=255)
     participants_allowed = models.PositiveIntegerField(default=0)
