@@ -38,7 +38,7 @@ The Error Object can be found in `tridu_server/schemas.py`.
 
 Delete methods respond either:
 - 204 : Delete complete + Null -> When delete is successful
-- 404 : Resource not found + str -> When the resource was not found (probably already deleted)
+- 404 : Resource not found + ErrorObjectSchema -> When the resource was not found (probably already deleted)
 
 Reasoning is explained here: https://stackoverflow.com/a/60695301/14134362.
 
@@ -47,7 +47,7 @@ Reasoning is explained here: https://stackoverflow.com/a/60695301/14134362.
 
 Any endpoints of type POST that create a resource will return:
 - 201: Created + resource -> When the create is successful
-- 409: Conflict + existing resource -> When the resource already exists
+- 200: Not Created but found + existing resource -> When the resource already exists
 
 ---
 ### Patch Update Method Response
@@ -55,4 +55,4 @@ Any endpoints of type POST that create a resource will return:
 To update a resource (able to partially edit), we use a Patch method with
 the following return options:
 - 200: Ok + resource -> When the resource was updated
-- 404: Resource not found + str -> When the resource being updated was not found
+- 404: Resource not found + ErrorObjectSchema -> When the resource being updated was not found

@@ -1,6 +1,5 @@
 from typing import List
 
-from django.shortcuts import get_object_or_404
 from ninja import Router
 
 from participants.models import Participant
@@ -13,6 +12,7 @@ from race.schema import (
     RaceTypeStatSchema,
     CreateRaceTypeSchema,
 )
+from tridu_server.schemas import ErrorObjectSchema
 
 router = Router()
 
@@ -25,42 +25,53 @@ def get_race_types(request):
 @router.post(
     "/racetypes",
     tags=["racetypes"],
-    response={201: RaceTypeSchema, 409: RaceTypeSchema},
+    response={201: RaceTypeSchema, 200: RaceTypeSchema},
 )
 def create_race_type(request, race_type_schema: CreateRaceTypeSchema):
     race_type, created = RaceType.objects.get_or_create(**race_type_schema.dict())
     if created:
         return 201, race_type
     else:
-        return 409, race_type
+        return 200, race_type
 
 
 @router.patch(
-    "/racetypes/{race_type_id}/update",
+    "/racetypes/{race_type_id}",
     tags=["racetypes"],
-    response={201: RaceTypeSchema, 404: str},
+    response={201: RaceTypeSchema, 404: ErrorObjectSchema},
 )
 def update_race_type(
     request, race_type_id: int, race_type_schema: CreateRaceTypeSchema
 ):
-    race_type = get_object_or_404(RaceType, id=race_type_id)
+
+    try:
+        race_type = RaceType.objects.get(id=race_type_id)
+    except RaceType.DoesNotExist:
+        return 404, ErrorObjectSchema.from_404_error(
+            "RaceType with id {} does not exist".format(race_type_id)
+        )
 
     for key, value in race_type_schema.dict().items():
         setattr(race_type, key, value)
+
     race_type.save()
     return 201, race_type
 
 
 @router.delete(
-    "/racetypes/{id}/delete", tags=["racetypes"], response={204: None, 404: str}
+    "/racetypes/{race_type_id}",
+    tags=["racetypes"],
+    response={204: None, 404: ErrorObjectSchema},
 )
-def delete_race(request, id: int):
+def delete_race(request, race_type_id: int):
     try:
-        race = RaceType.objects.get(id=id)
+        race = RaceType.objects.get(id=race_type_id)
         race.delete()
         return 204
     except RaceType.DoesNotExist:
-        return 404, "Race Type not found."
+        return 404, ErrorObjectSchema.from_404_error(
+            details="RaceType with id {} does not exist".format(race_type_id)
+        )
 
 
 @router.get("/", tags=["races"], response={200: List[RaceSchema]})
@@ -68,10 +79,13 @@ def get_races(request):
     return 200, Race.objects.filter(is_active=True).all()
 
 
-@router.post("/", tags=["races"], response={201: RaceSchema})
+@router.post("/", tags=["races"], response={200: RaceSchema, 409: RaceSchema})
 def create_race(request, race_schema: CreateRaceSchema):
     race, isNew = Race.objects.get_or_create(**race_schema.dict())
-    return 201, race
+    if isNew:
+        return 201, race
+    else:
+        return 200, race
 
 
 @router.get(
@@ -128,10 +142,14 @@ def race_participants_disabled(request, race_id: int):
     return 200, Participant.objects.inactive().for_race_id(race_id)
 
 
-@router.delete("/{id}", tags=["races"], response={204: None, 404: str})
-def delete_race(request, id: int):
+@router.delete(
+    "/{race_id}", tags=["races"], response={204: None, 404: ErrorObjectSchema}
+)
+def delete_race(request, race_id: int):
     try:
-        Race.objects.get(id=id).delete()
+        Race.objects.get(id=race_id).delete()
         return 204
     except Race.DoesNotExist:
-        return 404, "Race not found."
+        return 404, ErrorObjectSchema.from_404_error(
+            details="Race with id {} does not exist".format(race_id)
+        )

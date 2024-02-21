@@ -1,18 +1,17 @@
 from typing import List
 
 from django.db.models import Q
-from django.shortcuts import get_object_or_404
 from ninja import Router
 from ninja.pagination import paginate
 
 from accounts.models import User
 from accounts.schema import UserSchema, PatchUserSchema, CreateUserSchema
-from tridu_server.schemas import BulkCreateResponseSchema
+from tridu_server.schemas import BulkCreateResponseSchema, ErrorObjectSchema
 
 router = Router()
 
 
-@router.get("/active/non-staff", response=List[UserSchema])
+@router.get("/active/non-staff", tags=["user"], response=List[UserSchema])
 @paginate
 def get_active_non_staff_users(request, name: str = ""):
     if name != "":
@@ -31,16 +30,9 @@ def get_active_non_staff_users(request, name: str = ""):
     return users
 
 
-@router.get("/username/{username}", response={200: UserSchema, 404: str})
-def get_user_by_username(request, username: str):
-    try:
-        user = User.objects.get(username=username)
-        return 200, user
-    except User.DoesNotExist:
-        return 404, "User not found."
-
-
-@router.post("/bulk", response={201: BulkCreateResponseSchema})
+@router.post(
+    "/import", tags=["user", "import"], response={201: BulkCreateResponseSchema}
+)
 def create_users_bulk(request, userSchemas: List[CreateUserSchema]):
 
     created = 0
@@ -104,10 +96,18 @@ def create_users_bulk(request, userSchemas: List[CreateUserSchema]):
     }
 
 
-@router.post("/action/clean_gender", response={200: str, 403: str})
+@router.post(
+    "/action/clean_gender",
+    tags=["user", "admin action"],
+    response={200: str, 403: ErrorObjectSchema},
+)
 def admin_action_clean_gender(request):
     if not request.user.is_staff and not request.user.is_superuser:
-        return 403, "You must be an admin to access this action"
+        return 403, ErrorObjectSchema(
+            title="Permission Denied",
+            status=403,
+            details="You do not have permission to perform this action. You must be an admin!",
+        )
 
     num_updated = 0
 
@@ -121,25 +121,48 @@ def admin_action_clean_gender(request):
     return 200, "Action complete, {} instances updated".format(num_updated)
 
 
-@router.get("/{user_id}", response={200: UserSchema, 404: str})
+@router.get(
+    "/{int:user_id}", tags=["user"], response={200: UserSchema, 404: ErrorObjectSchema}
+)
 def get_user_by_id(request, user_id: int) -> UserSchema:
     try:
-        user = User.objects.get(id=user_id)
-        return 200, user
+        return 200, User.objects.get(id=user_id)
     except User.DoesNotExist:
-        return 404, "User not found."
+        return 404, ErrorObjectSchema.from_404_error(
+            details="User with id {} does not exist".format(user_id)
+        )
 
 
-@router.patch("/{user_id}", response={201: UserSchema})
+@router.get(
+    "/{str:username}", tags=["user"], response={200: UserSchema, 404: ErrorObjectSchema}
+)
+def get_user_by_username(request, username: str):
+    try:
+        return 200, User.objects.get(username=username)
+    except User.DoesNotExist:
+        return 404, ErrorObjectSchema.from_404_error(
+            details="User with username {} does not exist".format(username)
+        )
+
+
+@router.patch(
+    "/{int:user_id}", tags=["user"], response={201: UserSchema, 404: ErrorObjectSchema}
+)
 def update_user(request, user_id: int, userSchema: PatchUserSchema):
-    user = get_object_or_404(User, id=user_id)
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return 404, ErrorObjectSchema.from_404_error(
+            details="User with id {} does not exist".format(user_id)
+        )
+
     for key, value in userSchema.dict().items():
         setattr(user, key, value)
     user.save()
     return 201, user
 
 
-@router.post("/", response={201: UserSchema})
+@router.post("/", tags=["user"], response={201: UserSchema, 200: UserSchema})
 def create_user(request, userSchema: CreateUserSchema):
     user_data = userSchema.dict()
 
@@ -163,5 +186,6 @@ def create_user(request, userSchema: CreateUserSchema):
             date_of_birth=user_data.get("date_of_birth", ""),
             gender=user_data.get("gender", None),
         )
+        return 201, user
 
-    return 201, user
+    return 200, user

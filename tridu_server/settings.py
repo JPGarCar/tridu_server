@@ -167,8 +167,8 @@ STORAGES = {
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(hours=12),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=2),
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=4),
+    "REFRESH_TOKEN_LIFETIME": timedelta(hours=8),
 }
 
 CORS_ORIGIN_ALLOW_ALL = True
