@@ -365,7 +365,7 @@ def deactivate_participant(request, participant_id: int):
 
 @router.get(
     "/{participant_id}/comments",
-    tags=["participants"],
+    tags=["participant comment"],
     response={
         200: List[ParticipantCommentSchema],
     },
@@ -376,7 +376,7 @@ def get_participant_comments(request, participant_id: int):
 
 @router.post(
     "/{participant_id}/comments",
-    tags=["participants"],
+    tags=["participant comment"],
     response={201: ParticipantCommentSchema, 409: ErrorObjectSchema},
 )
 def create_participant_comment(
@@ -397,6 +397,16 @@ def create_participant_comment(
         )
 
     return 201, comment
+
+
+@router.get(
+    "/comments",
+    tags=["participant comment"],
+    response={200: List[ParticipantCommentSchema]},
+)
+@paginate
+def get_all_participant_comments(request):
+    return ParticipantComment.objects.all()
 
 
 @router.get(
