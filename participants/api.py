@@ -181,6 +181,18 @@ def participants_with_invalid_swim_time(request, race_id: int):
 
 
 @router.get(
+    "/race/{race_id}", tags=["participants"], response={200: List[ParticipantSchema]}
+)
+def get_participants_for_race(request, race_id: int, bib_number: int = None):
+    participants = Participant.objects.for_race_id(race_id=race_id)
+
+    if bib_number is not None:
+        participants = participants.filter(bib_number__regex=r"{}".format(bib_number))
+
+    return 200, participants
+
+
+@router.get(
     "/recently_edited", tags=["participants"], response={200: List[ParticipantSchema]}
 )
 def recently_edited_participants(request, count: int = 5):
