@@ -1,11 +1,19 @@
 from typing import List
 
+from django.core.exceptions import ValidationError
 from django.db.models import Q
 from ninja import Router
 from ninja.pagination import paginate
 
 from accounts.models import User
 from accounts.schema import UserSchema, PatchUserSchema, CreateUserSchema
+from locations.models import Location
+from participants.models import Participant, RelayParticipant
+from participants.schema.particiapnt import (
+    ParticipantSchema,
+    ParticipationSchema,
+    CreateParticipantSchema,
+)
 from tridu_server.schemas import BulkCreateResponseSchema, ErrorObjectSchema
 
 router = Router()
@@ -122,9 +130,91 @@ def admin_action_clean_gender(request):
 
 
 @router.get(
+    "/{int:user_id}/participations",
+    tags=["user"],
+    response={200: List[ParticipationSchema]},
+)
+def get_user_participations(request, user_id: int):
+    participations = []
+
+    participant: Participant
+    for participant in Participant.objects.of_user(user_id).all():
+        participations.append(
+            ParticipationSchema(
+                id=participant.id,
+                race=participant.race,
+                type=ParticipationSchema.ParticipationTypes.PARTICIPANT,
+            )
+        )
+
+    relay_participant: RelayParticipant
+    for relay_participant in RelayParticipant.objects.of_user(user_id):
+        participations.append(
+            ParticipationSchema(
+                id=relay_participant.id,
+                race=relay_participant.team.race,
+                type=ParticipationSchema.ParticipationTypes.RELAY_PARTICIPANT,
+            )
+        )
+
+    return 200, participations
+
+
+@router.post(
+    "/{user_id}/participants",
+    tags=["participant", "user"],
+    response={201: ParticipantSchema, 409: ErrorObjectSchema},
+)
+def create_user_participant(
+    request, user_id: int, participantSchema: CreateParticipantSchema
+):
+    data = participantSchema.dict(exclude_unset=True)
+
+    # get origin of Participant
+    origin = None
+    if "origin" in data:
+        origin_data = data.pop("origin")
+        origin = Location.objects.get(
+            country=origin_data["country"],
+            province=origin_data["province"],
+            city=origin_data["city"],
+        )
+
+    try:
+        participant = Participant(
+            origin=origin,
+            bib_number=data["bib_number"],
+            is_ftt=data["is_ftt"],
+            team=data["team"],
+            swim_time=data["swim_time"],
+            race_id=data["race"],
+            race_type_id=data["race_type"],
+            user_id=user_id,
+        )
+        participant.validate_constraints()
+        participant.save()
+
+        return 201, participant
+    except ValidationError as validation_error:
+        return 409, ErrorObjectSchema.from_validation_error(
+            validation_error, "Participant"
+        )
+
+
+@router.get(
+    "/{user_id}/participants",
+    tags=["participant", "user"],
+    response={200: List[ParticipantSchema]},
+)
+def get_user_participants(request, user_id: int):
+    participants = Participant.objects.of_user(user_id).select_all_related()
+    return 200, participants
+
+
+@router.get(
     "/{int:user_id}", tags=["user"], response={200: UserSchema, 404: ErrorObjectSchema}
 )
-def get_user_by_id(request, user_id: int) -> UserSchema:
+def get_user_by_id(request, user_id: int):
     try:
         return 200, User.objects.get(id=user_id)
     except User.DoesNotExist:

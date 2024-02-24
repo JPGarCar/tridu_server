@@ -2,7 +2,7 @@ from django.db import models
 from django.db.models import Q
 
 from comments.models import Comment
-from participants.querysets import ParticipantQuerySet
+from participants.querysets import ParticipantQuerySet, RelayParticipantQuerySet
 from tridu_server import settings
 from tridu_server.models import ActiveModel
 
@@ -87,6 +87,17 @@ class RelayParticipant(BaseParticipant):
     """
     A relay participant is part of a relay team in a race.
     """
+
+    objects = RelayParticipantQuerySet.as_manager()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=["user", "team"],
+                name="unique_relay_participant_for_user_and_team",
+                violation_error_message="This user is already registered for this team!",
+            )
+        ]
 
     team = models.ForeignKey(
         to="RelayTeam", on_delete=models.PROTECT, related_name="participants"

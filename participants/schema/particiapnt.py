@@ -1,10 +1,32 @@
-from ninja import Field, ModelSchema
+from enum import Enum
+
+from ninja import Field, ModelSchema, Schema
 
 from accounts.schema import UserSchema
 from heats.schema import HeatSchema
 from locations.schema import LocationSchema
-from participants.models import Participant, ParticipantComment
+from participants.models import (
+    Participant,
+    ParticipantComment,
+)
 from race.schema import RaceSchema, RaceTypeSchema
+
+
+class ParticipationSchema(Schema):
+    """
+    A simple Participation schema that allows returning IDs for Participant and RelayParticipant Models.
+    """
+
+    class ParticipationTypes(Enum):
+        PARTICIPANT = "participant"
+        RELAY_PARTICIPANT = "relay_participant"
+
+    class Config(Schema.Config):
+        use_enum_values = True
+
+    id: int
+    race: RaceSchema
+    type: ParticipationTypes
 
 
 class ParticipantSchema(ModelSchema):

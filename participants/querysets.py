@@ -5,7 +5,21 @@ import datetime
 from django.db.models import QuerySet, Count, Q
 
 
-class ParticipantQuerySet(QuerySet):
+class BaseParticipantQuerySet(QuerySet):
+    def of_user(self, user_id: int) -> BaseParticipantQuerySet:
+        return self.filter(user_id=user_id)
+
+    def active(self) -> BaseParticipantQuerySet:
+        return self.filter(is_active=True)
+
+    def inactive(self) -> BaseParticipantQuerySet:
+        return self.filter(is_active=False)
+
+    def order_by_most_recently_edited(self) -> BaseParticipantQuerySet:
+        return self.order_by("-date_changed")
+
+
+class ParticipantQuerySet(BaseParticipantQuerySet):
     def with_invalid_swim_time(self) -> ParticipantQuerySet:
         return self.filter(
             Q(swim_time__isnull=True)
@@ -17,17 +31,8 @@ class ParticipantQuerySet(QuerySet):
             race_id=race_id,
         )
 
-    def of_user(self, user_id: int) -> ParticipantQuerySet:
-        return self.filter(user_id=user_id)
-
     def in_heat(self, heat_id: int) -> ParticipantQuerySet:
         return self.filter(heat_id=heat_id)
-
-    def active(self) -> ParticipantQuerySet:
-        return self.filter(is_active=True)
-
-    def inactive(self) -> ParticipantQuerySet:
-        return self.filter(is_active=False)
 
     def active_for_race_grouped_by_race_type_and_ftt_count(
         self, race_id
@@ -40,8 +45,16 @@ class ParticipantQuerySet(QuerySet):
             .annotate(count=Count("id"))
         )
 
-    def order_by_most_recently_edited(self):
-        return self.order_by("-date_changed")
+    def select_all_related(self) -> ParticipantQuerySet:
+        return self.select_related("origin", "race", "race_type", "user", "heat")
 
-    def select_all_related(self):
-        return self.select_related("origin", "race", "race_type", "user")
+
+class RelayParticipantQuerySet(BaseParticipantQuerySet):
+
+    def select_all_related(self) -> RelayParticipantQuerySet:
+        return self.select_related(
+            "team",
+            "team__heat",
+            "team__race",
+            "team__race_type",
+        )

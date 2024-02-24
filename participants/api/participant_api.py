@@ -3,18 +3,17 @@ from typing import List
 
 from django.core.exceptions import ValidationError
 from ninja import Router
-from ninja.pagination import paginate
 
 from heats.models import Heat
 from heats.schema import HeatSchema
 from locations.models import Location
+from participants.api.comment_api import participant_comment_router
 from participants.models import Participant, ParticipantComment
-from participants.schema import (
+from participants.schema.particiapnt import (
     ParticipantSchema,
     ParticipantCommentSchema,
     ParticipantCommentCreateSchema,
     PatchParticipantSchema,
-    CreateParticipantSchema,
     CreateParticipantBulkSchema,
 )
 from race.models import RaceType
@@ -23,66 +22,7 @@ from tridu_server.schemas import BulkCreateResponseSchema, ErrorObjectSchema
 
 router = Router()
 
-
-@router.post(
-    "/user/{user_id}/participants",
-    tags=["participants"],
-    response={201: ParticipantSchema, 409: ErrorObjectSchema},
-)
-def create_participant(
-    request, user_id: int, participantSchema: CreateParticipantSchema
-):
-    data = participantSchema.dict(exclude_unset=True)
-
-    # get origin of Participant
-    origin = None
-    if "origin" in data:
-        origin_data = data.pop("origin")
-        origin = Location.objects.get(
-            country=origin_data["country"],
-            province=origin_data["province"],
-            city=origin_data["city"],
-        )
-
-    try:
-        participant = Participant(
-            origin=origin,
-            bib_number=data["bib_number"],
-            is_ftt=data["is_ftt"],
-            team=data["team"],
-            swim_time=data["swim_time"],
-            race_id=data["race"],
-            race_type_id=data["race_type"],
-            user_id=user_id,
-        )
-        participant.validate_constraints()
-        participant.save()
-
-        return 201, participant
-    except ValidationError as validation_error:
-        return 409, ErrorObjectSchema.from_validation_error(
-            validation_error, "Participant"
-        )
-
-
-@router.get(
-    "/user/{user_id}/participants",
-    tags=["participants"],
-    response={200: List[ParticipantSchema]},
-)
-def get_participants_for_user(request, user_id: int):
-    participants = Participant.objects.of_user(user_id).select_all_related()
-    return 200, participants
-
-
-@router.get(
-    "/heat/{heat_id}",
-    tags=["participants", "heats"],
-    response={200: List[ParticipantSchema]},
-)
-def get_participants_for_heat(request, heat_id: int):
-    participants = Participant.objects.in_heat(heat_id).select_all_related()
-    return 200, participants
+router.add_router("/comments", participant_comment_router)
 
 
 @router.post("/import", tags=["import"], response={201: BulkCreateResponseSchema})
@@ -169,58 +109,16 @@ def create_participant_bulk(
 
 
 @router.get(
-    "/race/{race_id}/invalid_swim_time/",
-    tags=["participants"],
-    response={200: List[ParticipantSchema]},
-)
-def participants_with_invalid_swim_time(request, race_id: int):
-    """Returns all the active participants of the given race that have an invalid swim time."""
-    return (
-        200,
-        Participant.objects.active().for_race_id(race_id).with_invalid_swim_time(),
-    )
-
-
-@router.get(
-    "/race/{race_id}", tags=["participants"], response={200: List[ParticipantSchema]}
-)
-@paginate
-def get_participants_for_race(request, race_id: int, bib_number: int = None):
-    participants = Participant.objects.for_race_id(race_id=race_id)
-
-    if bib_number is not None:
-        participants = participants.filter(bib_number__regex=r"{}".format(bib_number))
-
-    return participants
-
-
-@router.get(
-    "/recently_edited", tags=["participants"], response={200: List[ParticipantSchema]}
+    "/recently_edited", tags=["participant"], response={200: List[ParticipantSchema]}
 )
 def recently_edited_participants(request, count: int = 5):
     """Returns the most recently edited participants."""
     return 200, Participant.objects.order_by_most_recently_edited().all()[:count]
 
 
-@router.delete(
-    "/comment/{comment_id}",
-    tags=["Participant Comments"],
-    response={204: None, 404: ErrorObjectSchema},
-)
-def delete_participant_comment(request, comment_id: int):
-
-    try:
-        ParticipantComment.objects.get(id=comment_id).delete()
-        return 204, None
-    except ParticipantComment.DoesNotExist:
-        return 404, ErrorObjectSchema.from_404_error(
-            "Could not find comment to delete."
-        )
-
-
 @router.patch(
     "/{participant_id}/reactivate",
-    tags=["participants"],
+    tags=["participant"],
     response={201: ParticipantSchema, 409: ErrorObjectSchema, 404: ErrorObjectSchema},
 )
 def reactivate_participant(request, participant_id: int):
@@ -243,7 +141,7 @@ def reactivate_participant(request, participant_id: int):
 
 @router.patch(
     "/{participant_id}/change_race_type",
-    tags=["participants"],
+    tags=["participant"],
     response={201: ParticipantSchema, 409: ErrorObjectSchema, 404: ErrorObjectSchema},
 )
 def change_participant_race_type(
@@ -270,7 +168,7 @@ def change_participant_race_type(
         new_race_type = RaceType.objects.get(id=race_type_schema.id)
     except RaceType.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
-            "Heat with id {} does not exist".format(race_type_schema.id)
+            "Race Type with id {} does not exist".format(race_type_schema.id)
         )
 
     participant.race_type = new_race_type
@@ -281,7 +179,7 @@ def change_participant_race_type(
 
 @router.patch(
     "/{participant_id}/change_heat",
-    tags=["participants"],
+    tags=["participant"],
     response={200: ParticipantSchema, 409: ErrorObjectSchema, 404: ErrorObjectSchema},
 )
 def change_participant_heat(request, participant_id: int, heat_schema: HeatSchema):
@@ -317,7 +215,7 @@ def change_participant_heat(request, participant_id: int, heat_schema: HeatSchem
 
 @router.patch(
     "/{participant_id}/remove_heat",
-    tags=["participants"],
+    tags=["participant"],
     response={201: ParticipantSchema, 409: ErrorObjectSchema, 404: ErrorObjectSchema},
 )
 def remove_participant_heat(request, participant_id: int):
@@ -346,7 +244,7 @@ def remove_participant_heat(request, participant_id: int):
 
 @router.patch(
     "/{participant_id}/deactivate",
-    tags=["participants"],
+    tags=["participant"],
     response={201: ParticipantSchema, 404: ErrorObjectSchema},
 )
 def deactivate_participant(request, participant_id: int):
@@ -365,7 +263,7 @@ def deactivate_participant(request, participant_id: int):
 
 @router.get(
     "/{participant_id}/comments",
-    tags=["participant comment"],
+    tags=["participant", "comment"],
     response={
         200: List[ParticipantCommentSchema],
     },
@@ -376,7 +274,7 @@ def get_participant_comments(request, participant_id: int):
 
 @router.post(
     "/{participant_id}/comments",
-    tags=["participant comment"],
+    tags=["participant", "comment"],
     response={201: ParticipantCommentSchema, 409: ErrorObjectSchema},
 )
 def create_participant_comment(
@@ -400,21 +298,11 @@ def create_participant_comment(
 
 
 @router.get(
-    "/comments",
-    tags=["participant comment"],
-    response={200: List[ParticipantCommentSchema]},
-)
-@paginate
-def get_all_participant_comments(request):
-    return ParticipantComment.objects.all()
-
-
-@router.get(
     "/{participant_id}",
-    tags=["participants"],
+    tags=["participant"],
     response={200: ParticipantSchema, 404: ErrorObjectSchema},
 )
-def get_participant_details(request, participant_id: int):
+def get_participant(request, participant_id: int):
     try:
         return 200, Participant.objects.get(id=participant_id)
     except Participant.DoesNotExist:
@@ -425,7 +313,7 @@ def get_participant_details(request, participant_id: int):
 
 @router.patch(
     "/{participant_id}",
-    tags=["participants"],
+    tags=["participant"],
     response={201: ParticipantSchema, 409: ErrorObjectSchema, 404: ErrorObjectSchema},
 )
 def update_participant(

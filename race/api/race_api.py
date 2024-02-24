@@ -2,78 +2,22 @@ from typing import List
 
 from django.db.models import Min, Max, Count
 from ninja import Router
+from ninja.pagination import paginate
 
+from heats.models import Heat
+from heats.schema import HeatSchema
 from participants.models import Participant
-from participants.schema import ParticipantSchema
+from participants.schema.particiapnt import ParticipantSchema
 from race.models import RaceType, Race
 from race.schema import (
-    RaceTypeSchema,
     RaceSchema,
     CreateRaceSchema,
     RaceTypeStatSchema,
-    CreateRaceTypeSchema,
     RaceTypeBibInfoSchema,
 )
 from tridu_server.schemas import ErrorObjectSchema
 
 router = Router()
-
-
-@router.get("/racetypes", tags=["racetypes"], response={200: List[RaceTypeSchema]})
-def get_race_types(request):
-    return 200, RaceType.objects.filter(is_active=True).all()
-
-
-@router.post(
-    "/racetypes",
-    tags=["racetypes"],
-    response={201: RaceTypeSchema, 200: RaceTypeSchema},
-)
-def create_race_type(request, race_type_schema: CreateRaceTypeSchema):
-    race_type, created = RaceType.objects.get_or_create(**race_type_schema.dict())
-    if created:
-        return 201, race_type
-    else:
-        return 200, race_type
-
-
-@router.patch(
-    "/racetypes/{race_type_id}",
-    tags=["racetypes"],
-    response={201: RaceTypeSchema, 404: ErrorObjectSchema},
-)
-def update_race_type(
-    request, race_type_id: int, race_type_schema: CreateRaceTypeSchema
-):
-
-    try:
-        race_type = RaceType.objects.get(id=race_type_id)
-    except RaceType.DoesNotExist:
-        return 404, ErrorObjectSchema.from_404_error(
-            "RaceType with id {} does not exist".format(race_type_id)
-        )
-
-    for key, value in race_type_schema.dict().items():
-        setattr(race_type, key, value)
-
-    race_type.save()
-    return 201, race_type
-
-
-@router.delete(
-    "/racetypes/{race_type_id}",
-    tags=["racetypes"],
-    response={204: None, 404: ErrorObjectSchema},
-)
-def delete_race(request, race_type_id: int):
-    try:
-        race = RaceType.objects.get(id=race_type_id)
-        race.delete()
-        return 204
-    except RaceType.DoesNotExist:
-        return 404, ErrorObjectSchema.from_404_error(
-            details="RaceType with id {} does not exist".format(race_type_id)
-        )
 
 
 @router.get("/", tags=["races"], response={200: List[RaceSchema]})
@@ -88,6 +32,44 @@ def create_race(request, race_schema: CreateRaceSchema):
         return 201, race
     else:
         return 200, race
+
+
+@router.get(
+    "/{race_id}/heats", tags=["heats", "races"], response={200: List[HeatSchema]}
+)
+def get_race_heats(request, race_id: int):
+    return (
+        200,
+        Heat.objects.filter(race_id=race_id).select_related("race", "race_type").all(),
+    )
+
+
+@router.get(
+    "/{race_id}/participants/invalid_swim_time/",
+    tags=["participant"],
+    response={200: List[ParticipantSchema]},
+)
+def get_race_participants_with_invalid_swim_time(request, race_id: int):
+    """Returns all the active participants of the given race that have an invalid swim time."""
+    return (
+        200,
+        Participant.objects.active().for_race_id(race_id).with_invalid_swim_time(),
+    )
+
+
+@router.get(
+    "/{race_id}/participants",
+    tags=["participant", "races"],
+    response={200: List[ParticipantSchema]},
+)
+@paginate
+def get_race_participants(request, race_id: int, bib_number: int = None):
+    participants = Participant.objects.for_race_id(race_id=race_id)
+
+    if bib_number is not None:
+        participants = participants.filter(bib_number__regex=r"{}".format(bib_number))
+
+    return participants
 
 
 @router.get(
@@ -137,19 +119,19 @@ def get_race_stats(request, race_id: int):
 
 @router.get(
     "/{race_id}/participants/disabled",
-    tags=["participants", "races"],
+    tags=["participant", "races"],
     response={200: List[ParticipantSchema]},
 )
-def race_participants_disabled(request, race_id: int):
+def get_race_participants_disabled(request, race_id: int):
     return 200, Participant.objects.inactive().for_race_id(race_id)
 
 
 @router.get(
     "/{race_id}/racetypes/bib_info",
-    tags=["racetypes"],
+    tags=["race type"],
     response={200: List[RaceTypeBibInfoSchema]},
 )
-def get_race_types_bib_info_for_race(request, race_id: int):
+def get_race_bib_info_per_race_type(request, race_id: int):
     return 200, RaceType.objects.for_race(race_id).annotate(
         smallest_bib=Min("participants__bib_number"),
         largest_bib=Max("participants__bib_number"),
