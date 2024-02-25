@@ -144,6 +144,8 @@ def get_user_participations(request, user_id: int):
                 id=participant.id,
                 race=participant.race,
                 type=ParticipationSchema.ParticipationTypes.PARTICIPANT,
+                user=participant.user,
+                bib_number=participant.bib_number,
             )
         )
 
@@ -154,6 +156,8 @@ def get_user_participations(request, user_id: int):
                 id=relay_participant.id,
                 race=relay_participant.team.race,
                 type=ParticipationSchema.ParticipationTypes.RELAY_PARTICIPANT,
+                user=relay_participant.user,
+                bib_number=relay_participant.team.bib_number,
             )
         )
 

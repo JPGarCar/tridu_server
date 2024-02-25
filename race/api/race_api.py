@@ -6,8 +6,8 @@ from ninja.pagination import paginate
 
 from heats.models import Heat
 from heats.schema import HeatSchema
-from participants.models import Participant
-from participants.schema.particiapnt import ParticipantSchema
+from participants.models import Participant, RelayParticipant
+from participants.schema.particiapnt import ParticipantSchema, ParticipationSchema
 from race.models import RaceType, Race
 from race.schema import (
     RaceSchema,
@@ -70,6 +70,54 @@ def get_race_participants(request, race_id: int, bib_number: int = None):
         participants = participants.filter(bib_number__regex=r"{}".format(bib_number))
 
     return participants
+
+
+@router.get(
+    "/{race_id}/participations",
+    tags=["participant", "races"],
+    response={200: List[ParticipationSchema]},
+)
+def get_race_participations(
+    request, race_id: int, bib_number: int = None, limit: int = 100, offset: int = 0
+):
+    """
+    Returns all the normal and Relay Participants for this race.
+    """
+
+    participants = Participant.objects.for_race_id(race_id=race_id)
+    relay_participants = RelayParticipant.objects.filter(team__race_id=race_id)
+
+    if bib_number is not None:
+        participants = participants.filter(bib_number__regex=r"{}".format(bib_number))
+        relay_participants = relay_participants.filter(
+            team__bib_number__regex=r"{}".format(bib_number)
+        )
+
+    participations = []
+
+    for participant in participants[offset : offset + limit]:
+        participations.append(
+            ParticipationSchema(
+                id=participant.id,
+                race=participant.race,
+                type=ParticipationSchema.ParticipationTypes.PARTICIPANT,
+                user=participant.user,
+                bib_number=participant.bib_number,
+            )
+        )
+
+    for relay_participant in relay_participants[offset : offset + limit]:
+        participations.append(
+            ParticipationSchema(
+                id=relay_participant.id,
+                race=relay_participant.team.race,
+                type=ParticipationSchema.ParticipationTypes.RELAY_PARTICIPANT,
+                user=relay_participant.user,
+                bib_number=relay_participant.team.bib_number,
+            )
+        )
+
+    return 200, participations
 
 
 @router.get(

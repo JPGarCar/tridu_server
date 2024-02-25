@@ -27,6 +27,8 @@ class ParticipationSchema(Schema):
     id: int
     race: RaceSchema
     type: ParticipationTypes
+    user: UserSchema
+    bib_number: int
 
 
 class ParticipantSchema(ModelSchema):
