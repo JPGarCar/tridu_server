@@ -6,7 +6,7 @@ from ninja.pagination import paginate
 
 from heats.models import Heat
 from heats.schema import HeatSchema
-from participants.models import Participant, RelayParticipant
+from participants.models import Participant, RelayParticipant, RelayTeam
 from participants.schema.particiapnt import ParticipantSchema, ParticipationSchema
 from race.models import RaceType, Race
 from race.schema import (
@@ -125,13 +125,14 @@ def get_race_participations(
 )
 def get_race_stats(request, race_id: int):
 
-    race_types_query = RaceType.objects.filter(participants__race_id=race_id).distinct()
+    race_types_query = RaceType.objects.for_race(race_id).distinct()
 
     race_type_counts = {
         race_type.id: {"ftt_registered": 0, "registered": 0}
         for race_type in race_types_query
     }
 
+    # participants
     for (
         race_type_count
     ) in Participant.objects.active_for_race_grouped_by_race_type_and_ftt_count(
@@ -145,6 +146,13 @@ def get_race_stats(request, race_id: int):
             )
         else:
             race_type_counts[race_type_id]["registered"] = race_type_count.get("count")
+
+    # relay teams
+    for race_type_count in RelayTeam.objects.active_for_race_grouped_by_race_type_count(
+        race_id
+    ):
+        race_type_id = race_type_count.get("race_type")
+        race_type_counts[race_type_id]["registered"] = race_type_count.get("count")
 
     race_type_stats = []
 
@@ -180,11 +188,43 @@ def get_race_participants_disabled(request, race_id: int):
     response={200: List[RaceTypeBibInfoSchema]},
 )
 def get_race_bib_info_per_race_type(request, race_id: int):
-    return 200, RaceType.objects.for_race(race_id).annotate(
-        smallest_bib=Min("participants__bib_number"),
-        largest_bib=Max("participants__bib_number"),
-        count=Count("participants__bib_number"),
-    )
+
+    bib_info_schema_items: List[RaceTypeBibInfoSchema] = []
+
+    for race_type in RaceType.objects.for_race(race_id).annotate(
+        p_smallest_bib=Min("participants__bib_number"),
+        p_largest_bib=Max("participants__bib_number"),
+        p_count=Count("participants__bib_number"),
+        r_smallest_bib=Min("relay_teams__bib_number"),
+        r_largest_bib=Max("relay_teams__bib_number"),
+        r_count=Count("relay_teams__bib_number"),
+    ):
+        bib_info_schema_items.append(
+            RaceTypeBibInfoSchema(
+                **race_type.__dict__,
+                smallest_bib=(
+                    race_type.p_smallest_bib or 0
+                    if race_type.r_smallest_bib is None
+                    else (
+                        race_type.r_smallest_bib or 0
+                        if race_type.p_smallest_bib is None
+                        else min(race_type.p_smallest_bib, race_type.r_smallest_bib)
+                    )
+                ),
+                largest_bib=(
+                    race_type.p_largest_bib or 0
+                    if race_type.r_largest_bib is None
+                    else (
+                        race_type.r_largest_bib or 0
+                        if race_type.p_largest_bib is None
+                        else max(race_type.p_largest_bib, race_type.r_largest_bib)
+                    )
+                ),
+                count=race_type.p_count or 0 + race_type.r_count or 0,
+            )
+        )
+
+    return 200, bib_info_schema_items
 
 
 @router.delete(

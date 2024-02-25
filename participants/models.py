@@ -2,7 +2,11 @@ from django.db import models
 from django.db.models import Q
 
 from comments.models import Comment
-from participants.querysets import ParticipantQuerySet, RelayParticipantQuerySet
+from participants.querysets import (
+    ParticipantQuerySet,
+    RelayParticipantQuerySet,
+    RelayTeamQuerySet,
+)
 from tridu_server import settings
 from tridu_server.models import ActiveModel
 
@@ -108,6 +112,8 @@ class RelayTeam(ActiveModel):
     """
     A relay team is composed of multiple RelayParticipants. They participate together in a race.
     """
+
+    objects = RelayTeamQuerySet.as_manager()
 
     class Meta:
         constraints = [

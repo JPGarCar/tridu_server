@@ -45,6 +45,17 @@ class ParticipantQuerySet(BaseParticipantQuerySet):
             .annotate(count=Count("id"))
         )
 
+    def active_for_race_grouped_by_race_type_count(
+        self, race_id
+    ) -> ParticipantQuerySet:
+
+        return (
+            self.for_race_id(race_id)
+            .active()
+            .values("race_type")
+            .annotate(count=Count("id"))
+        )
+
     def select_all_related(self) -> ParticipantQuerySet:
         return self.select_related("origin", "race", "race_type", "user", "heat")
 
@@ -57,4 +68,27 @@ class RelayParticipantQuerySet(BaseParticipantQuerySet):
             "team__heat",
             "team__race",
             "team__race_type",
+        )
+
+
+class RelayTeamQuerySet(QuerySet):
+
+    def active(self) -> BaseParticipantQuerySet:
+        return self.filter(is_active=True)
+
+    def inactive(self) -> BaseParticipantQuerySet:
+        return self.filter(is_active=False)
+
+    def for_race_id(self, race_id: int) -> RelayTeamQuerySet:
+        return self.filter(race_id=race_id)
+
+    def active_for_race_grouped_by_race_type_count(
+        self, race_id
+    ) -> ParticipantQuerySet:
+
+        return (
+            self.for_race_id(race_id)
+            .active()
+            .values("race_type")
+            .annotate(count=Count("id"))
         )
