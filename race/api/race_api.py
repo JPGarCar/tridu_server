@@ -4,6 +4,11 @@ from django.db.models import Min, Max, Count
 from ninja import Router
 from ninja.pagination import paginate
 
+from heats.heat_service import (
+    check_auto_schedule_is_ready,
+    auto_schedule_heats,
+    AutoSchedulerException,
+)
 from heats.models import Heat
 from heats.schema import HeatSchema
 from participants.models import Participant, RelayParticipant, RelayTeam
@@ -37,11 +42,38 @@ def create_race(request, race_schema: CreateRaceSchema):
 @router.get(
     "/{race_id}/heats", tags=["heats", "races"], response={200: List[HeatSchema]}
 )
-def get_race_heats(request, race_id: int):
-    return (
-        200,
-        Heat.objects.filter(race_id=race_id).select_related("race", "race_type").all(),
-    )
+def get_race_heats(request, race_id: int, race_type_id: int = None):
+    heats = Heat.objects.filter(race_id=race_id).select_related("race", "race_type")
+
+    if race_type_id:
+        heats = heats.for_race_type(race_type_id)
+
+    return 200, heats
+
+
+@router.get(
+    "/{race_id}/heats/auto_schedule/ready",
+    tags=["heats", "races"],
+    response={200: List[str]},
+)
+def get_race_ready_for_auto_schedule_heats(request, race_id: int):
+    """Returns empty list if ready, else a list of errors."""
+    return 200, check_auto_schedule_is_ready(race_id=race_id)
+
+
+@router.post(
+    "/{race_id}/heats/auto_schedule",
+    tags=["heats", "races"],
+    response={200: bool, 400: ErrorObjectSchema},
+)
+def auto_schedule_race_heats(request, race_id: int):
+    try:
+        auto_schedule_heats(race_id=race_id)
+        return 200, True
+    except AutoSchedulerException as e:
+        return 400, ErrorObjectSchema(
+            title="Automatic Scheduler Error", status=400, details=e.__str__()
+        )
 
 
 @router.get(

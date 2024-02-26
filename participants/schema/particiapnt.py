@@ -1,3 +1,4 @@
+import datetime
 from enum import Enum
 
 from ninja import Field, ModelSchema, Schema
@@ -29,6 +30,7 @@ class ParticipationSchema(Schema):
     type: ParticipationTypes
     user: UserSchema
     bib_number: int
+    swim_time: datetime.timedelta | None = None
 
 
 class ParticipantSchema(ModelSchema):
@@ -99,7 +101,7 @@ class PatchParticipantSchema(ModelSchema):
 
     class Meta:
         model = Participant
-        fields = ("id", "bib_number", "is_ftt", "team", "swim_time", "location")
+        fields = ("bib_number", "is_ftt", "team", "swim_time", "location")
         fields_optional = "__all__"
 
 
