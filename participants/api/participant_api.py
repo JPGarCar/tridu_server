@@ -36,7 +36,7 @@ def create_participant_bulk(
     count = 2  # excel starts at 2
 
     for participantSchema in participantSchemas:
-        data = participantSchema.dict(exclude_unset=True)
+        data = participantSchema.dict()
 
         origin = None
         if "city" in data and "country" in data and "province" in data:
@@ -326,7 +326,7 @@ def update_participant(
             "Participant with id {} does not exist".format(participant_id)
         )
 
-    data = participant_schema.dict(exclude_unset=True)
+    data = participant_schema.dict()
 
     # update origin of Participant
     if "origin" in data:

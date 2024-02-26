@@ -172,7 +172,7 @@ def get_user_participations(request, user_id: int):
 def create_user_participant(
     request, user_id: int, participantSchema: CreateParticipantSchema
 ):
-    data = participantSchema.dict(exclude_unset=True)
+    data = participantSchema.dict()
 
     # get origin of Participant
     origin = None

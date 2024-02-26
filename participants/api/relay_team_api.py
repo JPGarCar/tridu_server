@@ -281,7 +281,7 @@ def update_relay_participant(
             "Relay Participant with id {} does not exist".format(relay_participant_id)
         )
 
-    data = relay_participant_schema.dict(exclude_unset=True)
+    data = relay_participant_schema.dict()
 
     # update origin of Participant
     if "origin" in data:
@@ -352,7 +352,7 @@ def update_relay_team(
             "Relay Team with id {} does not exist".format(relay_team_id)
         )
 
-    data = relay_team_schema.dict(exclude_unset=True)
+    data = relay_team_schema.dict()
 
     # update participant values
     for key, value in data.items():
