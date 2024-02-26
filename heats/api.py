@@ -1,11 +1,12 @@
+import datetime
 from typing import List
 
 from ninja import Router
 
 from heats.models import Heat
 from heats.schema import HeatSchema, CreateHeatSchema, PatchHeatSchema
-from participants.models import Participant
-from participants.schema.particiapnt import ParticipantSchema
+from participants.models import Participant, RelayTeam
+from participants.schema.particiapnt import ParticipantSchema, ParticipationSchema
 from tridu_server.schemas import ErrorObjectSchema
 
 router = Router()
@@ -19,6 +20,46 @@ router = Router()
 def get_heat_participants(request, heat_id: int):
     participants = Participant.objects.in_heat(heat_id).select_all_related()
     return 200, participants
+
+
+@router.get(
+    "/{heat_id}/participations",
+    tags=["heats"],
+    response={200: List[ParticipationSchema]},
+)
+def get_heat_participations(request, heat_id: int):
+    participations = []
+
+    participant: Participant
+    for participant in Participant.objects.in_heat(heat_id).select_all_related():
+        participations.append(
+            ParticipationSchema(
+                id=participant.id,
+                race=participant.race,
+                type=ParticipationSchema.ParticipationTypes.PARTICIPANT,
+                user=participant.user,
+                bib_number=participant.bib_number,
+                swim_time=participant.swim_time,
+            )
+        )
+
+    relay_team: RelayTeam
+    for relay_team in RelayTeam.objects.for_heat(heat_id).select_related(
+        "race", "race_type", "heat"
+    ):
+        user = relay_team.participants.first().user
+
+        participations.append(
+            ParticipationSchema(
+                id=relay_team.id,
+                race=relay_team.race,
+                type=ParticipationSchema.ParticipationTypes.RELAY_PARTICIPANT,
+                user=user,
+                bib_number=relay_team.bib_number,
+            )
+        )
+
+    return 200, participations
 
 
 @router.get(
