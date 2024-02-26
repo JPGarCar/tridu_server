@@ -82,6 +82,9 @@ class RelayTeamQuerySet(QuerySet):
     def for_race_id(self, race_id: int) -> RelayTeamQuerySet:
         return self.filter(race_id=race_id)
 
+    def for_heat(self, heat_id: int) -> RelayTeamQuerySet:
+        return self.filter(heat_id=heat_id)
+
     def active_for_race_grouped_by_race_type_count(
         self, race_id
     ) -> ParticipantQuerySet:
@@ -92,3 +95,6 @@ class RelayTeamQuerySet(QuerySet):
             .values("race_type")
             .annotate(count=Count("id"))
         )
+
+    def select_all_related(self) -> ParticipantQuerySet:
+        return self.select_related("race", "race_type", "heat")
