@@ -1,5 +1,7 @@
 from django.db import models
 
+from heats.querysets import HeatQuerySet
+
 
 class Heat(models.Model):
 
@@ -10,6 +12,8 @@ class Heat(models.Model):
 
         RECREATION = "Recreation"
         COMPETITIVE = "Competitive"
+
+    objects = HeatQuerySet.as_manager()
 
     race = models.ForeignKey(
         to="race.Race", on_delete=models.PROTECT, related_name="heats"
