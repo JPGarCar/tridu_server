@@ -103,11 +103,11 @@ def change_relay_team_race_type(
 
 
 @router.patch(
-    "/{relay_team_id}/change_heat",
+    "/{relay_team_id}/change_heat/{heat_id}",
     tags=["participant"],
     response={200: RelayTeamSchema, 409: ErrorObjectSchema, 404: ErrorObjectSchema},
 )
-def change_relay_team_heat(request, relay_team_id: int, heat_schema: HeatSchema):
+def change_relay_team_heat(request, relay_team_id: int, heat_id: int):
 
     try:
         relay_team = RelayTeam.objects.get(id=relay_team_id)
@@ -121,21 +121,35 @@ def change_relay_team_heat(request, relay_team_id: int, heat_schema: HeatSchema)
             409,
             ErrorObjectSchema.for_validation_error(
                 instance_name="Relay Team",
-                details="Relay Team is in a heat. Please remove them from their heat first.",
+                details="Relay Team is in a Heat. Please remove them from their Heat first.",
             ),
         )
 
+    if not relay_team.is_active:
+        return 409, ErrorObjectSchema.for_validation_error(
+            instance_name="Relay Team",
+            details="Relay Team is in an inactive state. Unable to add to Heat.",
+        )
+
     try:
-        new_heat = Heat.objects.get(id=heat_schema.id)
+        new_heat = Heat.objects.get(id=heat_id)
     except Heat.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
-            "Heat with id {} does not exist".format(heat_schema.id)
+            "Heat with id {} does not exist".format(heat_id)
+        )
+
+    if new_heat.race_type_id != relay_team.race_type_id:
+        return 409, ErrorObjectSchema.for_validation_error(
+            instance_name="Relay Team",
+            details="Race Types do not match, Relay Team is {} and Heat is {}".format(
+                relay_team.race_type.name, new_heat.race_type.name
+            ),
         )
 
     relay_team.heat = new_heat
     relay_team.save()
 
-    return 201, relay_team
+    return 200, relay_team
 
 
 @router.patch(

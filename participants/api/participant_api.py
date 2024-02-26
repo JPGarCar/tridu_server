@@ -178,11 +178,11 @@ def change_participant_race_type(
 
 
 @router.patch(
-    "/{participant_id}/change_heat",
+    "/{participant_id}/change_heat/{heat_id}",
     tags=["participant"],
     response={200: ParticipantSchema, 409: ErrorObjectSchema, 404: ErrorObjectSchema},
 )
-def change_participant_heat(request, participant_id: int, heat_schema: HeatSchema):
+def change_participant_heat(request, participant_id: int, heat_id: int):
 
     try:
         participant = Participant.objects.get(id=participant_id)
@@ -196,21 +196,35 @@ def change_participant_heat(request, participant_id: int, heat_schema: HeatSchem
             409,
             ErrorObjectSchema.for_validation_error(
                 instance_name="Participant",
-                details="Participant is in a heat. Please remove them from their heat first.",
+                details="Participant is in a Heat. Please remove them from their Heat first.",
             ),
         )
 
+    if not participant.is_active:
+        return 409, ErrorObjectSchema.for_validation_error(
+            instance_name="Participant",
+            details="Participant is in an inactive state. Unable to add to Heat.",
+        )
+
     try:
-        new_heat = Heat.objects.get(id=heat_schema.id)
+        new_heat = Heat.objects.get(id=heat_id)
     except Heat.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
-            "Heat with id {} does not exist".format(heat_schema.id)
+            "Heat with id {} does not exist".format(heat_id)
+        )
+
+    if new_heat.race_type_id != participant.race_type_id:
+        return 409, ErrorObjectSchema.for_validation_error(
+            instance_name="Participant",
+            details="Race Types do not match, Participant is {} and Heat is {}".format(
+                participant.race_type.name, new_heat.race_type.name
+            ),
         )
 
     participant.heat = new_heat
     participant.save()
 
-    return 201, participant
+    return 200, participant
 
 
 @router.patch(
