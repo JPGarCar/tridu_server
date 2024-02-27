@@ -3,7 +3,7 @@ from typing import List
 from ninja import Router
 
 from race.models import RaceType
-from race.schema import RaceTypeSchema, CreateRaceTypeSchema
+from race.schema import RaceTypeSchema, CreateRaceTypeSchema, PatchRaceTypeSchema
 from tridu_server.schemas import ErrorObjectSchema
 
 router = Router()
@@ -30,9 +30,7 @@ def delete_race(request, race_type_id: int):
     tags=["race type"],
     response={201: RaceTypeSchema, 404: ErrorObjectSchema},
 )
-def update_race_type(
-    request, race_type_id: int, race_type_schema: CreateRaceTypeSchema
-):
+def update_race_type(request, race_type_id: int, race_type_schema: PatchRaceTypeSchema):
 
     try:
         race_type = RaceType.objects.get(id=race_type_id)
@@ -41,7 +39,7 @@ def update_race_type(
             "RaceType with id {} does not exist".format(race_type_id)
         )
 
-    for key, value in race_type_schema.dict().items():
+    for key, value in race_type_schema.dict(exclude_unset=True).items():
         setattr(race_type, key, value)
 
     race_type.save()

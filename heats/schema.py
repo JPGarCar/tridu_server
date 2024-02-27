@@ -44,6 +44,7 @@ class PatchHeatSchema(ModelSchema):
     class Meta:
         model = Heat
         fields = ("termination", "start_datetime", "color", "ideal_capacity", "pool")
+        fields_optional = "__all__"
 
 
 class CreateHeatSchema(ModelSchema):

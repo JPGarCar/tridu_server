@@ -33,6 +33,13 @@ class CreateRaceTypeSchema(ModelSchema):
         fields = ("name", "participants_allowed", "ftt_allowed")
 
 
+class PatchRaceTypeSchema(ModelSchema):
+    class Meta:
+        model = RaceType
+        fields = ("name", "participants_allowed", "ftt_allowed")
+        fields_optional = "__all__"
+
+
 class RaceTypeStatSchema(Schema):
     race_type: RaceTypeSchema
     registered: int

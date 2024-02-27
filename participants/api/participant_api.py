@@ -340,7 +340,7 @@ def update_participant(
             "Participant with id {} does not exist".format(participant_id)
         )
 
-    data = participant_schema.dict()
+    data = participant_schema.dict(exclude_unset=True)
 
     # update origin of Participant
     if "origin" in data:

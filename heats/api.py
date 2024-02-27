@@ -85,7 +85,7 @@ def update_heat(request, heat_id: int, heat_schema: PatchHeatSchema):
             details="Heat with id {} does not exist".format(heat_id)
         )
 
-    for key, value in heat_schema.dict().items():
+    for key, value in heat_schema.dict(exclude_unset=True).items():
         setattr(heat, key, value)
 
     heat.save()

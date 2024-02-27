@@ -250,7 +250,7 @@ def update_user(request, user_id: int, userSchema: PatchUserSchema):
             details="User with id {} does not exist".format(user_id)
         )
 
-    for key, value in userSchema.dict().items():
+    for key, value in userSchema.dict(exclude_unset=True).items():
         setattr(user, key, value)
     user.save()
     return 201, user
