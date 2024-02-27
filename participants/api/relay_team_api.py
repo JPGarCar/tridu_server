@@ -12,7 +12,7 @@ from participants.models import RelayTeamComment, RelayParticipant, RelayTeam
 from participants.schema.relay_team import (
     RelayTeamCommentSchema,
     RelayTeamCommentCreateSchema,
-    RelayTeamParticipantSchema,
+    RelayParticipantSchema,
     RelayTeamSchema,
     CreateRelayTeamSchema,
     CreateRelayParticipantSchema,
@@ -223,7 +223,7 @@ def reactivate_relay_team(request, relay_team_id: int):
     "/{relay_team_id}/participants",
     tags=["relay team"],
     response={
-        201: RelayTeamParticipantSchema,
+        201: RelayParticipantSchema,
         404: ErrorObjectSchema,
         409: ErrorObjectSchema,
     },
@@ -265,7 +265,7 @@ def add_participant_to_relay_team(
 @router.get(
     "/{relay_team_id}/participants",
     tags=["relay team"],
-    response={200: List[RelayTeamParticipantSchema]},
+    response={200: List[RelayParticipantSchema]},
 )
 def get_relay_team_participants(request, relay_team_id: int):
     return 200, RelayParticipant.objects.filter(team_id=relay_team_id)
@@ -275,7 +275,7 @@ def get_relay_team_participants(request, relay_team_id: int):
     "/{relay_team_id}/participants/{relay_participant_id}",
     tags=["participant"],
     response={
-        201: RelayTeamParticipantSchema,
+        201: RelayParticipantSchema,
         409: ErrorObjectSchema,
         404: ErrorObjectSchema,
     },
@@ -336,7 +336,7 @@ def update_relay_participant(
 @router.get(
     "/participants/{relay_participant_id}",
     tags=["relay team"],
-    response={200: RelayTeamParticipantSchema, 404: ErrorObjectSchema},
+    response={200: RelayParticipantSchema, 404: ErrorObjectSchema},
 )
 def get_relay_participant(request, relay_participant_id: int):
     try:

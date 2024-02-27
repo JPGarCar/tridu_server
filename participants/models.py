@@ -11,6 +11,16 @@ from tridu_server import settings
 from tridu_server.models import ActiveModel
 
 
+class Participation(models.Model):
+    """
+    The connection model between a Participant or RelayTeam to the Heat, Race, and RaceType models.
+    Allows us to keep all race bib numbers in one model, able to search on one model by bib number, and run heat
+    actions on one model, especially useful for swim time related actions like auto scheduler.
+    """
+
+    pass
+
+
 class BaseParticipant(ActiveModel):
     """
     A base class for all participants. It connects to the User model, Location (origin) Model and Wetbags on Firebase.
@@ -35,6 +45,7 @@ class BaseParticipant(ActiveModel):
     location = models.CharField(
         max_length=256, default="", db_default="", null=True, blank=True
     )
+    waiver_signed = models.BooleanField(default=True)
 
     def __str__(self):
         return self.user.__str__()

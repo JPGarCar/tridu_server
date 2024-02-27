@@ -42,7 +42,7 @@ class PatchRelayTeamSchema(ModelSchema):
 class CreateRelayParticipantSchema(ModelSchema):
     class Meta:
         model = RelayParticipant
-        fields = ("location", "user", "team")
+        fields = ("location", "user", "team", "waiver_signed")
         fields_optional = ("location",)
 
 
@@ -51,18 +51,18 @@ class PatchRelayParticipantSchema(ModelSchema):
 
     class Meta:
         model = RelayParticipant
-        fields = ("location",)
+        fields = ("location", "waiver_signed")
         fields_optional = "__all__"
 
 
-class RelayTeamParticipantSchema(ModelSchema):
+class RelayParticipantSchema(ModelSchema):
     origin: LocationSchema | None = None
     user: UserSchema
     team: RelayTeamSchema
 
     class Meta:
         model = RelayParticipant
-        fields = ("id", "date_changed", "is_active", "location")
+        fields = ("id", "date_changed", "is_active", "location", "waiver_signed")
         fields_optional = ("location",)
 
 

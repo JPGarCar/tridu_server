@@ -51,6 +51,7 @@ class ParticipantSchema(ModelSchema):
             "date_changed",
             "is_active",
             "location",
+            "waiver_signed",
         )
         fields_optional = ("team", "swim_time", "location")
 
@@ -68,6 +69,7 @@ class CreateParticipantSchema(ModelSchema):
             "race",
             "race_type",
             "location",
+            "waiver_signed",
         )
         fields_optional = (
             "swim_time",
@@ -101,7 +103,14 @@ class PatchParticipantSchema(ModelSchema):
 
     class Meta:
         model = Participant
-        fields = ("bib_number", "is_ftt", "team", "swim_time", "location")
+        fields = (
+            "bib_number",
+            "is_ftt",
+            "team",
+            "swim_time",
+            "location",
+            "waiver_signed",
+        )
         fields_optional = "__all__"
 
 
