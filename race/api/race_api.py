@@ -106,7 +106,9 @@ def get_race_participants(request, race_id: int, bib_number: int = None):
     participants = Participant.objects.for_race_id(race_id=race_id)
 
     if bib_number is not None:
-        participants = participants.filter(bib_number__regex=r"{}".format(bib_number))
+        participants = participants.filter(
+            bib_number__regex=r"{}".format(bib_number)
+        ).order_by("bib_number")
 
     return participants
 
@@ -127,10 +129,12 @@ def get_race_participations(
     relay_participants = RelayParticipant.objects.filter(team__race_id=race_id)
 
     if bib_number is not None:
-        participants = participants.filter(bib_number__regex=r"{}".format(bib_number))
+        participants = participants.filter(
+            bib_number__regex=r"{}".format(bib_number)
+        ).order_by("bib_number")
         relay_participants = relay_participants.filter(
             team__bib_number__regex=r"{}".format(bib_number)
-        )
+        ).order_by("team__bib_number")
 
     participations = []
 
