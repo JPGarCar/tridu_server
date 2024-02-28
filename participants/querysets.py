@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import datetime
+from typing import List
 
 from django.db.models import QuerySet, Count, Q
 
@@ -33,6 +34,9 @@ class ParticipantQuerySet(BaseParticipantQuerySet):
 
     def in_heat(self, heat_id: int) -> ParticipantQuerySet:
         return self.filter(heat_id=heat_id)
+
+    def not_in_race_types(self, heat_types: List[int]) -> ParticipantQuerySet:
+        return self.exclude(race_type__in=heat_types)
 
     def active_for_race_grouped_by_race_type_and_ftt_count(
         self, race_id

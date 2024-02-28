@@ -83,9 +83,16 @@ def auto_schedule_race_heats(request, race_id: int):
 )
 def get_race_participants_with_invalid_swim_time(request, race_id: int):
     """Returns all the active participants of the given race that have an invalid swim time."""
+    race_type_ids_without_swim_time = (
+        RaceType.objects.does_not_need_swim_time().values_list("id", flat=True)
+    )
+
     return (
         200,
-        Participant.objects.active().for_race_id(race_id).with_invalid_swim_time(),
+        Participant.objects.active()
+        .for_race_id(race_id)
+        .not_in_race_types(race_type_ids_without_swim_time)
+        .with_invalid_swim_time(),
     )
 
 

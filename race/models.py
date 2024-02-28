@@ -28,6 +28,7 @@ class RaceType(ActiveModel):
     name = models.CharField(max_length=255)
     participants_allowed = models.PositiveIntegerField(default=0)
     ftt_allowed = models.PositiveIntegerField(default=0)
+    needs_swim_time = models.BooleanField(default=True)
 
     def __str__(self):
         return self.name

@@ -18,7 +18,13 @@ class CreateRaceSchema(ModelSchema):
 class RaceTypeSchema(ModelSchema):
     class Meta:
         model = RaceType
-        fields = ("id", "name", "participants_allowed", "ftt_allowed")
+        fields = (
+            "id",
+            "name",
+            "participants_allowed",
+            "ftt_allowed",
+            "needs_swim_time",
+        )
 
 
 class RaceTypeBibInfoSchema(RaceTypeSchema):
@@ -30,13 +36,13 @@ class RaceTypeBibInfoSchema(RaceTypeSchema):
 class CreateRaceTypeSchema(ModelSchema):
     class Meta:
         model = RaceType
-        fields = ("name", "participants_allowed", "ftt_allowed")
+        fields = ("name", "participants_allowed", "ftt_allowed", "needs_swim_time")
 
 
 class PatchRaceTypeSchema(ModelSchema):
     class Meta:
         model = RaceType
-        fields = ("name", "participants_allowed", "ftt_allowed")
+        fields = ("name", "participants_allowed", "ftt_allowed", "needs_swim_time")
         fields_optional = "__all__"
 
 
