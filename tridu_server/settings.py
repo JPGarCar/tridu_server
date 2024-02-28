@@ -53,6 +53,7 @@ INSTALLED_APPS = [
     "locations",
     "participants",
     "race",
+    "checkins",
 ]
 
 MIDDLEWARE = [
