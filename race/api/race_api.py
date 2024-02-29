@@ -138,7 +138,9 @@ def get_race_participations(
 
     participations = []
 
-    for participant in participants[offset : offset + limit]:
+    for participant in (
+        participants[offset : offset + limit] if limit is not None else participants
+    ):
         participations.append(
             ParticipationSchema(
                 id=participant.id,
@@ -149,7 +151,11 @@ def get_race_participations(
             )
         )
 
-    for relay_participant in relay_participants[offset : offset + limit]:
+    for relay_participant in (
+        relay_participants[offset : offset + limit]
+        if limit is not None
+        else relay_participants
+    ):
         participations.append(
             ParticipationSchema(
                 id=relay_participant.id,
