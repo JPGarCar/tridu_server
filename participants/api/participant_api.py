@@ -328,7 +328,7 @@ def get_participant(request, participant_id: int):
 @router.patch(
     "/{participant_id}",
     tags=["participant"],
-    response={201: ParticipantSchema, 409: ErrorObjectSchema, 404: ErrorObjectSchema},
+    response={200: ParticipantSchema, 409: ErrorObjectSchema, 404: ErrorObjectSchema},
 )
 def update_participant(
     request, participant_id: int, participant_schema: PatchParticipantSchema
@@ -375,4 +375,4 @@ def update_participant(
         )
 
     participant.save()
-    return 201, participant
+    return 200, participant

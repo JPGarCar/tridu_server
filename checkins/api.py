@@ -25,14 +25,15 @@ def create_checkin(request, check_in_schema: CreateCheckInSchema):
     depends_on = None
     if "depends_on" in schema_data:
         depends_on_schema = schema_data.pop("depends_on")
-        try:
-            depends_on = CheckIn.objects.get(**depends_on_schema)
-        except CheckIn.DoesNotExist:
-            return 404, ErrorObjectSchema.from_404_error(
-                "Check In used as a dependency with ID {} does not exist.".format(
-                    depends_on_schema.get("id")
+        if depends_on_schema:
+            try:
+                depends_on = CheckIn.objects.get(**depends_on_schema)
+            except CheckIn.DoesNotExist:
+                return 404, ErrorObjectSchema.from_404_error(
+                    "Check In used as a dependency with ID {} does not exist.".format(
+                        depends_on_schema.get("id")
+                    )
                 )
-            )
 
     check_in, is_new = CheckIn.objects.get_or_create(
         **schema_data, depends_on=depends_on
