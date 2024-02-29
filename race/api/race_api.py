@@ -119,7 +119,12 @@ def get_race_participants(request, race_id: int, bib_number: int = None):
     response={200: List[ParticipationSchema]},
 )
 def get_race_participations(
-    request, race_id: int, bib_number: int = None, limit: int = 100, offset: int = 0
+    request,
+    race_id: int,
+    bib_number: int = None,
+    active: bool = False,
+    limit: int = 100,
+    offset: int = 0,
 ):
     """
     Returns all the normal and Relay Participants for this race.
@@ -135,6 +140,10 @@ def get_race_participations(
         relay_participants = relay_participants.filter(
             team__bib_number__regex=r"{}".format(bib_number)
         ).order_by("team__bib_number")
+
+    if active:
+        participants = participants.active()
+        relay_participants = relay_participants.active()
 
     participations = []
 
