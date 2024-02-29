@@ -1,10 +1,12 @@
+from typing import Optional
+
 from ninja import ModelSchema
 
 from checkins.models import CheckIn
 
 
 class CheckInSchema(ModelSchema):
-    depends_on: "CheckInSchema" = None
+    depends_on: Optional["CheckInSchema"] = None
 
     class Meta:
         model = CheckIn
@@ -29,3 +31,4 @@ class PatchCheckInSchema(ModelSchema):
     class Meta:
         model = CheckIn
         fields = ("name", "positive_action", "negative_action")
+        fields_optional = "__all__"

@@ -2,6 +2,7 @@ from typing import List
 
 from ninja import Router
 
+from checkins.models import CheckIn
 from race.models import RaceType
 from race.schema import RaceTypeSchema, CreateRaceTypeSchema, PatchRaceTypeSchema
 from tridu_server.schemas import ErrorObjectSchema
@@ -39,7 +40,24 @@ def update_race_type(request, race_type_id: int, race_type_schema: PatchRaceType
             "RaceType with id {} does not exist".format(race_type_id)
         )
 
-    for key, value in race_type_schema.dict(exclude_unset=True).items():
+    data = race_type_schema.dict(exclude_unset=True)
+
+    if "checkins" in data:
+        checkins = data.pop("checkins")
+        request_checkin_ids = [checkin.get("id") for checkin in checkins]
+
+        current_checkin_ids = race_type.checkins.values_list("id", flat=True)
+        removed_checkin_ids = [
+            current_checkin_id
+            for current_checkin_id in current_checkin_ids
+            if current_checkin_id not in request_checkin_ids
+        ]
+        to_add_checkins = CheckIn.objects.filter(id__in=request_checkin_ids)
+        to_remove_checkins = CheckIn.objects.filter(id__in=removed_checkin_ids)
+        race_type.checkins.add(*to_add_checkins)
+        race_type.checkins.remove(*to_remove_checkins)
+
+    for key, value in data.items():
         setattr(race_type, key, value)
 
     race_type.save()

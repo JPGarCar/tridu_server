@@ -1,5 +1,8 @@
+from typing import List
+
 from ninja import ModelSchema, Schema
 
+from checkins.schema import CheckInSchema
 from race.models import Race, RaceType
 
 
@@ -16,6 +19,8 @@ class CreateRaceSchema(ModelSchema):
 
 
 class RaceTypeSchema(ModelSchema):
+    checkins: List[CheckInSchema] = None
+
     class Meta:
         model = RaceType
         fields = (
@@ -34,12 +39,16 @@ class RaceTypeBibInfoSchema(RaceTypeSchema):
 
 
 class CreateRaceTypeSchema(ModelSchema):
+    checkins: List[CheckInSchema] = None
+
     class Meta:
         model = RaceType
         fields = ("name", "participants_allowed", "ftt_allowed", "needs_swim_time")
 
 
 class PatchRaceTypeSchema(ModelSchema):
+    checkins: List[CheckInSchema] = None
+
     class Meta:
         model = RaceType
         fields = ("name", "participants_allowed", "ftt_allowed", "needs_swim_time")

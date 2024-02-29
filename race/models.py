@@ -1,7 +1,6 @@
-import datetime
-
 from django.db import models
 
+from checkins.models import CheckIn
 from race.querysets import RaceTypeQuerySet
 from tridu_server.models import ActiveModel
 
@@ -29,6 +28,10 @@ class RaceType(ActiveModel):
     participants_allowed = models.PositiveIntegerField(default=0)
     ftt_allowed = models.PositiveIntegerField(default=0)
     needs_swim_time = models.BooleanField(default=True)
+
+    checkins = models.ManyToManyField(
+        to=CheckIn, blank=True, null=True, related_name="used_by_race_types"
+    )
 
     def __str__(self):
         return self.name

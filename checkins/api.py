@@ -1,25 +1,53 @@
+from typing import List
+
 from django.core.exceptions import ValidationError
 from ninja import Router
 
 from checkins.models import CheckIn
 from checkins.schema import CheckInSchema, CreateCheckInSchema, PatchCheckInSchema
+from race.models import RaceType
+from race.schema import RaceTypeSchema
 from tridu_server.schemas import ErrorObjectSchema
 
 router = Router()
 
 
-@router.get("/", tags=["checkins"], response={200: CheckInSchema})
+@router.get("/", tags=["checkins"], response={200: List[CheckInSchema]})
 def get_checkins(request):
     return 200, CheckIn.objects.all()
 
 
 @router.post("/", tags=["checkins"], response={201: CheckInSchema})
 def create_checkin(request, check_in_schema: CreateCheckInSchema):
-    check_in, is_new = CheckIn.objects.get_or_create(**check_in_schema.dict())
+
+    schema_data = check_in_schema.dict()
+
+    depends_on = None
+    if "depends_on" in schema_data:
+        depends_on_schema = schema_data.pop("depends_on")
+        try:
+            depends_on = CheckIn.objects.get(**depends_on_schema)
+        except CheckIn.DoesNotExist:
+            return 404, ErrorObjectSchema.from_404_error(
+                "Check In used as a dependency with ID {} does not exist.".format(
+                    depends_on_schema.get("id")
+                )
+            )
+
+    check_in, is_new = CheckIn.objects.get_or_create(
+        **schema_data, depends_on=depends_on
+    )
     if is_new:
         return 201, check_in
     else:
         return 200, check_in
+
+
+@router.get(
+    "/{check_in_id}/race_types", tags=["checkins"], response={200: List[RaceTypeSchema]}
+)
+def get_check_in_race_types(request, check_in_id: int):
+    return 200, RaceType.objects.filter(checkins__in=[check_in_id]).all()
 
 
 @router.delete(
