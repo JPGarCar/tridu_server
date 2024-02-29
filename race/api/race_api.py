@@ -127,7 +127,7 @@ def get_race_participations(
     offset: int = 0,
 ):
     """
-    Returns all the normal and Relay Participants for this race.
+    Returns all the normal and Relay Participants for this race. A limit of -1 will return all participations.
     """
 
     participants = Participant.objects.for_race_id(race_id=race_id)
@@ -148,7 +148,7 @@ def get_race_participations(
     participations = []
 
     for participant in (
-        participants[offset : offset + limit] if limit is not None else participants
+        participants[offset : offset + limit] if limit >= 0 else participants
     ):
         participations.append(
             ParticipationSchema(
@@ -162,7 +162,7 @@ def get_race_participations(
 
     for relay_participant in (
         relay_participants[offset : offset + limit]
-        if limit is not None
+        if limit >= 0
         else relay_participants
     ):
         participations.append(
