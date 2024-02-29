@@ -32,10 +32,19 @@ class RaceTypeSchema(ModelSchema):
         )
 
 
-class RaceTypeBibInfoSchema(RaceTypeSchema):
+class RaceTypeBibInfoSchema(ModelSchema):
     smallest_bib: int
     largest_bib: int
     count: int
+
+    class Meta:
+        model = RaceType
+        fields = (
+            "id",
+            "name",
+            "participants_allowed",
+            "ftt_allowed",
+        )
 
 
 class CreateRaceTypeSchema(ModelSchema):

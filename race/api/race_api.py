@@ -259,7 +259,10 @@ def get_race_bib_info_per_race_type(request, race_id: int):
     ):
         bib_info_schema_items.append(
             RaceTypeBibInfoSchema(
-                **race_type.__dict__,
+                id=race_type.id,
+                name=race_type.name,
+                participants_allowed=race_type.participants_allowed,
+                ftt_allowed=race_type.ftt_allowed,
                 smallest_bib=(
                     race_type.p_smallest_bib or 0
                     if race_type.r_smallest_bib is None
