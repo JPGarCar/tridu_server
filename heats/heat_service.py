@@ -1,5 +1,6 @@
 from typing import List
 
+from django.db import transaction
 from django.db.models import Count, Sum, Q
 
 from heats.models import Heat
@@ -28,43 +29,46 @@ def auto_schedule_heats(race_id: int) -> None:
 
     heats = Heat.objects.for_race(race_id=race_id).all()
 
-    race_type: RaceType
-    for race_type in RaceType.objects.for_race(race_id=race_id).distinct():
-        race_type_heats = filter(
-            lambda _heat: _heat.race_type_id == race_type.id, heats
-        )
-        total_count = 0
-        for heat in race_type_heats:
-            participant_ids = (
-                Participant.objects.for_race_id(race_id)
-                .active()
-                .filter(race_type_id=race_type.id)
-                .order_by("-swim_time")[total_count : total_count + heat.ideal_capacity]
-                .values_list("id", flat=True)
+    with transaction.atomic():
+        race_type: RaceType
+        for race_type in RaceType.objects.for_race(race_id=race_id).distinct():
+            race_type_heats = filter(
+                lambda _heat: _heat.race_type_id == race_type.id, heats
             )
-
-            relay_team_ids = (
-                RelayTeam.objects.for_race_id(race_id)
-                .active()
-                .filter(race_type_id=race_type.id)[
-                    total_count : total_count + heat.ideal_capacity
-                ]
-                .values_list("id", flat=True)
-            )
-
-            if len(participant_ids) != 0 and len(relay_team_ids) != 0:
-                raise AutoSchedulerException(
-                    "Participants and Relay Teams found for {} type".format(
-                        race_type.__str__()
-                    )
+            total_count = 0
+            for heat in race_type_heats:
+                participant_ids = (
+                    Participant.objects.for_race_id(race_id)
+                    .active()
+                    .filter(race_type_id=race_type.id)
+                    .order_by("-swim_time")[
+                        total_count : total_count + heat.ideal_capacity
+                    ]
+                    .values_list("id", flat=True)
                 )
 
-            if len(participant_ids) > 0:
-                Participant.objects.filter(id__in=participant_ids).update(heat=heat)
-            elif len(relay_team_ids) > 0:
-                RelayTeam.objects.filter(id__in=relay_team_ids).update(heat=heat)
+                relay_team_ids = (
+                    RelayTeam.objects.for_race_id(race_id)
+                    .active()
+                    .filter(race_type_id=race_type.id)[
+                        total_count : total_count + heat.ideal_capacity
+                    ]
+                    .values_list("id", flat=True)
+                )
 
-            total_count += heat.ideal_capacity
+                if len(participant_ids) != 0 and len(relay_team_ids) != 0:
+                    raise AutoSchedulerException(
+                        "Participants and Relay Teams found for {} type".format(
+                            race_type.__str__()
+                        )
+                    )
+
+                if len(participant_ids) > 0:
+                    Participant.objects.filter(id__in=participant_ids).update(heat=heat)
+                elif len(relay_team_ids) > 0:
+                    RelayTeam.objects.filter(id__in=relay_team_ids).update(heat=heat)
+
+                total_count += heat.ideal_capacity
 
 
 def check_auto_schedule_is_ready(race_id: int) -> List[str]:
@@ -89,8 +93,8 @@ def check_auto_schedule_is_ready(race_id: int) -> List[str]:
 
     race_type: RaceType
     for race_type in RaceType.objects.for_race(race_id=race_id).annotate(
-        count=Count("participants__bib_number", filter=Q(is_active=True))
-        + Count("relay_teams__bib_number", filter=Q(is_active=True))
+        count=Count("participants__bib_number", filter=Q(participants__is_active=True))
+        + Count("relay_teams__bib_number", filter=Q(relay_teams__is_active=True))
     ):
         if race_type.id not in heat_dict_capacity:
             errors.append("Race Type {} has no heats available".format(race_type.name))
