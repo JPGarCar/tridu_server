@@ -27,9 +27,17 @@ def auto_schedule_heats(race_id: int) -> None:
     if len(check_auto_schedule_is_ready(race_id)) > 0:
         raise AutoSchedulerException("Auto Schedule is not ready!")
 
-    heats = Heat.objects.for_race(race_id=race_id).order_by("start_datetime").all()
+    heats = (
+        Heat.objects.for_race(race_id=race_id)
+        .order_by("start_datetime")
+        .distinct()
+        .all()
+    )
 
     with transaction.atomic():
+        Participant.objects.for_race_id(race_id=race_id).update(heat=None)
+        RelayTeam.objects.for_race_id(race_id=race_id).update(heat=None)
+
         race_type: RaceType
         for race_type in RaceType.objects.for_race(race_id=race_id).distinct():
             race_type_heats = filter(
