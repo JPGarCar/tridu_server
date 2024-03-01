@@ -27,7 +27,7 @@ def auto_schedule_heats(race_id: int) -> None:
     if len(check_auto_schedule_is_ready(race_id)) > 0:
         raise AutoSchedulerException("Auto Schedule is not ready!")
 
-    heats = Heat.objects.for_race(race_id=race_id).all()
+    heats = Heat.objects.for_race(race_id=race_id).order_by("start_datetime").all()
 
     with transaction.atomic():
         race_type: RaceType
@@ -36,7 +36,7 @@ def auto_schedule_heats(race_id: int) -> None:
                 lambda _heat: _heat.race_type_id == race_type.id, heats
             )
             total_count = 0
-            for heat in race_type_heats:
+            for heat in list(race_type_heats):
                 participant_ids = (
                     Participant.objects.for_race_id(race_id)
                     .active()
