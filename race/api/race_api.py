@@ -12,7 +12,11 @@ from heats.heat_service import (
 from heats.models import Heat
 from heats.schema import HeatSchema
 from participants.models import Participant, RelayParticipant, RelayTeam
-from participants.schema.particiapnt import ParticipantSchema, ParticipationSchema
+from participants.schema.particiapnt import (
+    ParticipantSchema,
+    ParticipationSchema,
+    MassPatchParticipantSchema,
+)
 from race.models import RaceType, Race
 from race.schema import (
     RaceSchema,
@@ -115,6 +119,32 @@ def get_race_participants(request, race_id: int, bib_number: int = None):
         ).order_by("bib_number")
 
     return participants
+
+
+@router.patch(
+    "/{race_id}/participants",
+    tags=["participants", "races"],
+    response={200: int},
+)
+def patch_race_participants(
+    request,
+    race_id: int,
+    participant_details: MassPatchParticipantSchema,
+    race_type_id: int = None,
+    heat_id: int = None,
+):
+    participants = Participant.objects
+
+    if race_id:
+        participants = participants.for_race_id(race_id)
+
+    if race_type_id:
+        participants = participants.for_race_type_id(race_type_id)
+
+    if heat_id:
+        participants = participants.in_heat(heat_id)
+
+    return 200, participants.update(**participant_details.dict())
 
 
 @router.get(
@@ -298,7 +328,7 @@ def get_race_bib_info_per_race_type(request, race_id: int):
 def delete_race(request, race_id: int):
     try:
         Race.objects.get(id=race_id).delete()
-        return 204
+        return 204, None
     except Race.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
             details="Race with id {} does not exist".format(race_id)

@@ -32,6 +32,9 @@ class ParticipantQuerySet(BaseParticipantQuerySet):
             race_id=race_id,
         )
 
+    def for_race_type_id(self, race_type_id) -> ParticipantQuerySet:
+        return self.filter(race_type_id=race_type_id)
+
     def in_heat(self, heat_id: int) -> ParticipantQuerySet:
         return self.filter(heat_id=heat_id)
 

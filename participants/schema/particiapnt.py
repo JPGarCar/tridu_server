@@ -117,6 +117,17 @@ class PatchParticipantSchema(ModelSchema):
         fields_optional = "__all__"
 
 
+class MassPatchParticipantSchema(ModelSchema):
+
+    class Meta:
+        model = Participant
+        fields = (
+            "is_ftt",
+            "waiver_signed",
+        )
+        fields_optional = "__all__"
+
+
 class ParticipantCommentSchema(ModelSchema):
     writer_name: str = Field(None, alias="writer.first_name")
 

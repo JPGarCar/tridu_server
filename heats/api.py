@@ -98,7 +98,7 @@ def update_heat(request, heat_id: int, heat_schema: PatchHeatSchema):
 def delete_heat(request, heat_id: int):
     num_deleted, deleted = Heat.objects.filter(id=heat_id).delete()
     if num_deleted > 0:
-        return 204
+        return 204, None
     else:
         return 404, ErrorObjectSchema.from_404_error(
             details="Heat with id {} does not exist".format(heat_id)

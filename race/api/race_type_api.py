@@ -19,7 +19,7 @@ def delete_race(request, race_type_id: int):
     try:
         race = RaceType.objects.get(id=race_type_id)
         race.delete()
-        return 204
+        return 204, None
     except RaceType.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
             details="RaceType with id {} does not exist".format(race_type_id)

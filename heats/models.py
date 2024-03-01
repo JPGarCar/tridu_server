@@ -31,7 +31,9 @@ class Heat(models.Model):
         max_length=7, verbose_name="HEX Color Code", help_text="Color hex code with #"
     )
     ideal_capacity = models.IntegerField(default=0)
-    pool = models.CharField(max_length=25, choices=Pools, default=Pools.RECREATION)
+    pool = models.CharField(
+        max_length=25, choices=Pools, default=Pools.RECREATION, null=True, blank=True
+    )
 
     def __str__(self):
         return "{} Heat Termination {}".format(

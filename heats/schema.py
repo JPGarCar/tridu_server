@@ -16,13 +16,13 @@ class HeatSchema(ModelSchema):
 
     @staticmethod
     def resolve_avg_swim_time(obj: Heat) -> datetime.timedelta:
-        return obj.participants.aggregate(Avg("swim_time"))[
+        return obj.participants.active().aggregate(Avg("swim_time"))[
             "swim_time__avg"
         ] or datetime.timedelta(0)
 
     @staticmethod
     def resolve_participant_count(obj: Heat) -> int:
-        return obj.participants.count()
+        return obj.participants.active().count()
 
     @staticmethod
     def resolve_name(obj: Heat) -> str:
@@ -38,6 +38,7 @@ class HeatSchema(ModelSchema):
             "ideal_capacity",
             "pool",
         )
+        fields_optional = ("pool",)
 
 
 class PatchHeatSchema(ModelSchema):
@@ -60,4 +61,4 @@ class CreateHeatSchema(ModelSchema):
             "race",
             "race_type",
         )
-        fields_optional = ("color", "ideal_capacity")
+        fields_optional = ("color", "ideal_capacity", "pool")
