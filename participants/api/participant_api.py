@@ -4,11 +4,11 @@ from typing import List
 from django.core.exceptions import ValidationError
 from ninja import Router
 
+from checkins.models import CheckIn
 from heats.models import Heat
-from heats.schema import HeatSchema
 from locations.models import Location
 from participants.api.comment_api import participant_comment_router
-from participants.models import Participant, ParticipantComment
+from participants.models import Participant, ParticipantComment, ParticipantCheckIn
 from participants.schema.particiapnt import (
     ParticipantSchema,
     ParticipantCommentSchema,
@@ -273,6 +273,68 @@ def deactivate_participant(request, participant_id: int):
     participant.deactivate()
     participant.save()
     return 201, participant
+
+
+@router.patch(
+    "{participant_id}/checkins/{checkin_id}",
+    tags=["participant", "checkins"],
+    response={200: ParticipantSchema, 404: ErrorObjectSchema, 409: ErrorObjectSchema},
+)
+def checkin_participant(
+    request, participant_id: int, checkin_id: int, value: bool = None
+):
+    """By default, it will flip the value, but if value is in URL, set that value."""
+
+    try:
+        participant = Participant.objects.get(id=participant_id)
+    except Participant.DoesNotExist:
+        return 404, ErrorObjectSchema.from_404_error(
+            "Participant with id {} does not exist".format(participant_id)
+        )
+
+    try:
+        checkin = CheckIn.objects.get(id=checkin_id)
+    except CheckIn.DoesNotExist:
+        return 404, ErrorObjectSchema.from_404_error(
+            "CheckIn with id {} does not exist".format(checkin_id)
+        )
+
+    if checkin.depends_on is not None:
+        not_ready = False
+        participant_dependent = None
+        try:
+            participant_dependent = participant.checkins.get(
+                check_in__id=checkin.depends_on.id
+            )
+        except ParticipantCheckIn.DoesNotExist:
+            not_ready = True
+
+        if not_ready or not participant_dependent.is_checked_in:
+            return 409, ErrorObjectSchema.for_validation_error(
+                "Can not check in participant to {} as they have not checked in at {}".format(
+                    checkin.name, checkin.depends_on.name
+                ),
+                "Participant",
+            )
+
+    try:
+        participant_checkin = participant.checkins.get(check_in__id=checkin_id)
+    except ParticipantCheckIn.DoesNotExist:
+        participant.checkins.create(
+            check_in_id=checkin_id,
+            is_checked_in=True,
+        )
+        participant.refresh_from_db()
+        return 200, participant
+
+    if value:
+        participant_checkin.is_checked_in = value
+    else:
+        participant_checkin.is_checked_in = not participant_checkin.is_checked_in
+
+    participant_checkin.save()
+    participant.refresh_from_db()
+    return 200, participant
 
 
 @router.get(

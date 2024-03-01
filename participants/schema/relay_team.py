@@ -1,6 +1,9 @@
+from typing import List
+
 from ninja import ModelSchema, Field
 
 from accounts.schema import UserSchema
+from checkins.schema import CheckInUserBaseSchema
 from heats.schema import HeatSchema
 from locations.schema import LocationSchema
 from race.schema import RaceTypeSchema, RaceSchema
@@ -12,6 +15,7 @@ class RelayTeamSchema(ModelSchema):
     race: RaceSchema
     race_type: RaceTypeSchema
     heat: HeatSchema | None = None
+    checkins: List[CheckInUserBaseSchema] = []
 
     class Meta:
         model = RelayTeam

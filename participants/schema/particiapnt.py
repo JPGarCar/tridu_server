@@ -1,9 +1,11 @@
 import datetime
 from enum import Enum
+from typing import List
 
 from ninja import Field, ModelSchema, Schema
 
 from accounts.schema import UserSchema
+from checkins.schema import CheckInUserBaseSchema
 from heats.schema import HeatSchema
 from locations.schema import LocationSchema
 from participants.models import (
@@ -39,6 +41,7 @@ class ParticipantSchema(ModelSchema):
     race_type: RaceTypeSchema
     heat: HeatSchema | None = None
     user: UserSchema
+    checkins: List[CheckInUserBaseSchema] = []
 
     class Meta:
         model = Participant

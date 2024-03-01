@@ -4,11 +4,16 @@ from django.core.exceptions import ValidationError
 from ninja import Router
 
 from accounts.models import User
+from checkins.models import CheckIn
 from heats.models import Heat
-from heats.schema import HeatSchema
 from locations.models import Location
 from participants.api.comment_api import relay_team_comment_router
-from participants.models import RelayTeamComment, RelayParticipant, RelayTeam
+from participants.models import (
+    RelayTeamComment,
+    RelayParticipant,
+    RelayTeam,
+    RelayTeamCheckIn,
+)
 from participants.schema.relay_team import (
     RelayTeamCommentSchema,
     RelayTeamCommentCreateSchema,
@@ -217,6 +222,68 @@ def reactivate_relay_team(request, relay_team_id: int):
     relay_team.activate()
     relay_team.save()
     return 201, relay_team
+
+
+@router.patch(
+    "{relay_team_id}/checkins/{checkin_id}",
+    tags=["relay team", "checkins"],
+    response={200: RelayTeamSchema, 404: ErrorObjectSchema, 409: ErrorObjectSchema},
+)
+def checkin_relay_team(
+    request, relay_team_id: int, checkin_id: int, value: bool = None
+):
+    """By default, it will flip the value, but if value is in URL, set that value."""
+
+    try:
+        relay_team = RelayTeam.objects.get(id=relay_team_id)
+    except RelayTeam.DoesNotExist:
+        return 404, ErrorObjectSchema.from_404_error(
+            "Relay Team with id {} does not exist".format(relay_team_id)
+        )
+
+    try:
+        checkin = CheckIn.objects.get(id=checkin_id)
+    except CheckIn.DoesNotExist:
+        return 404, ErrorObjectSchema.from_404_error(
+            "CheckIn with id {} does not exist".format(checkin_id)
+        )
+
+    if checkin.depends_on is not None:
+        not_ready = False
+        relay_dependant = None
+        try:
+            relay_dependant = relay_team.checkins.get(
+                check_in__id=checkin.depends_on.id
+            )
+        except RelayTeamCheckIn.DoesNotExist:
+            not_ready = True
+
+        if not_ready or not relay_dependant.is_checked_in:
+            return 409, ErrorObjectSchema.for_validation_error(
+                "Can not check in Relay Team to {} as they have not checked in at {}".format(
+                    checkin.name, checkin.depends_on.name
+                ),
+                "Relay Team",
+            )
+
+    try:
+        relay_team_checkin = relay_team.checkins.get(check_in__id=checkin_id)
+    except RelayTeamCheckIn.DoesNotExist:
+        relay_team.checkins.create(
+            check_in_id=checkin_id,
+            is_checked_in=True,
+        )
+        relay_team.refresh_from_db()
+        return 200, relay_team
+
+    if value:
+        relay_team_checkin.is_checked_in = value
+    else:
+        relay_team_checkin.is_checked_in = not relay_team_checkin.is_checked_in
+
+    relay_team_checkin.save()
+    relay_team.refresh_from_db()
+    return 200, relay_team
 
 
 @router.post(

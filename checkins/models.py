@@ -35,5 +35,5 @@ class CheckInUserBase(models.Model):
     check_in = models.ForeignKey(
         CheckIn, on_delete=models.PROTECT, related_name="%(class)s_check_ins"
     )
-    isCheckedIn = models.BooleanField(default=False)
+    is_checked_in = models.BooleanField(default=False)
     date_changed = models.DateTimeField(auto_now=True)

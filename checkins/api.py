@@ -80,6 +80,19 @@ def update_checkin(request, check_in_id: int, check_in_schema: PatchCheckInSchem
 
     check_in_data = check_in_schema.dict(exclude_unset=True)
 
+    if "depends_on" in check_in_data:
+        depends_on_schema = check_in_data.pop("depends_on")
+        if depends_on_schema:
+            try:
+                depends_on = CheckIn.objects.get(id=depends_on_schema.get("id"))
+                check_in.depends_on = depends_on
+            except CheckIn.DoesNotExist:
+                return 404, ErrorObjectSchema.from_404_error(
+                    "Check In used as a dependency with ID {} does not exist.".format(
+                        depends_on_schema.get("id")
+                    )
+                )
+
     # update Check In values
     for key, value in check_in_data.items():
         setattr(check_in, key, value)

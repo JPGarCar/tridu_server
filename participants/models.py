@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Q
 
+from checkins.models import CheckInUserBase
 from comments.models import Comment
 from participants.querysets import (
     ParticipantQuerySet,
@@ -98,6 +99,13 @@ class Participant(BaseParticipant):
     swim_time = models.DurationField(null=True, blank=True)
 
 
+class ParticipantCheckIn(CheckInUserBase):
+
+    participant = models.ForeignKey(
+        to=Participant, on_delete=models.CASCADE, related_name="checkins"
+    )
+
+
 class RelayParticipant(BaseParticipant):
     """
     A relay participant is part of a relay team in a race.
@@ -159,6 +167,13 @@ class RelayTeam(ActiveModel):
 
     bib_number = models.IntegerField(db_index=True)
     name = models.CharField(max_length=255, verbose_name="Relay Team Name")
+
+
+class RelayTeamCheckIn(CheckInUserBase):
+
+    team = models.ForeignKey(
+        to=RelayTeam, on_delete=models.CASCADE, related_name="checkins"
+    )
 
 
 class ParticipantComment(Comment):
