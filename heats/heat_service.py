@@ -48,7 +48,7 @@ def auto_schedule_heats(race_id: int) -> None:
                 Participant.objects.for_race_id(race_id)
                 .active()
                 .filter(race_type_id=race_type.id, heat__isnull=True)
-                .order_by("-swim_time")[: total_count + heat.ideal_capacity]
+                .order_by("-swim_time")[: heat.ideal_capacity]
                 .values_list("id", flat=True)
             )
 
@@ -56,7 +56,7 @@ def auto_schedule_heats(race_id: int) -> None:
                 RelayTeam.objects.for_race_id(race_id)
                 .active()
                 .filter(race_type_id=race_type.id, heat__isnull=True)[
-                    : total_count + heat.ideal_capacity
+                    : heat.ideal_capacity
                 ]
                 .values_list("id", flat=True)
             )
