@@ -32,6 +32,19 @@ class RaceTypeSchema(ModelSchema):
         )
 
 
+class CheckinLessRaceTypeSchema(ModelSchema):
+
+    class Meta:
+        model = RaceType
+        fields = (
+            "id",
+            "name",
+            "participants_allowed",
+            "ftt_allowed",
+            "needs_swim_time",
+        )
+
+
 class RaceTypeBibInfoSchema(ModelSchema):
     smallest_bib: int
     largest_bib: int

@@ -22,6 +22,14 @@ class RelayTeamSchema(ModelSchema):
         fields = ("id", "is_active", "bib_number", "name")
 
 
+class DownloadInfoRelayTeamSchema(ModelSchema):
+    race_type: RaceTypeSchema
+
+    class Meta:
+        model = RelayTeam
+        fields = ("id", "is_active", "bib_number", "name")
+
+
 class CreateRelayTeamSchema(ModelSchema):
 
     class Meta:

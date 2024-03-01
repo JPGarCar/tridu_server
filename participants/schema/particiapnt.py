@@ -12,7 +12,7 @@ from participants.models import (
     Participant,
     ParticipantComment,
 )
-from race.schema import RaceSchema, RaceTypeSchema
+from race.schema import RaceSchema, RaceTypeSchema, CheckinLessRaceTypeSchema
 
 
 class ParticipationSchema(Schema):
@@ -52,6 +52,26 @@ class ParticipantSchema(ModelSchema):
             "team",
             "swim_time",
             "date_changed",
+            "is_active",
+            "location",
+            "waiver_signed",
+        )
+        fields_optional = ("team", "swim_time", "location")
+
+
+class DownloadInfoParticipantSchema(ModelSchema):
+    origin: LocationSchema | None = None
+    race_type: CheckinLessRaceTypeSchema
+    user: UserSchema
+
+    class Meta:
+        model = Participant
+        fields = (
+            "id",
+            "bib_number",
+            "is_ftt",
+            "team",
+            "swim_time",
             "is_active",
             "location",
             "waiver_signed",

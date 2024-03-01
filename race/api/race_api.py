@@ -16,7 +16,9 @@ from participants.schema.particiapnt import (
     ParticipantSchema,
     ParticipationSchema,
     MassPatchParticipantSchema,
+    DownloadInfoParticipantSchema,
 )
+from participants.schema.relay_team import DownloadInfoRelayTeamSchema
 from race.models import RaceType, Race
 from race.schema import (
     RaceSchema,
@@ -110,8 +112,13 @@ def get_race_participants_with_invalid_swim_time(request, race_id: int):
     response={200: List[ParticipantSchema]},
 )
 @paginate
-def get_race_participants(request, race_id: int, bib_number: int = None):
+def get_race_participants(
+    request, race_id: int, bib_number: int = None, active: bool = False
+):
     participants = Participant.objects.for_race_id(race_id=race_id)
+
+    if active:
+        participants = participants.active()
 
     if bib_number is not None:
         participants = participants.filter(
@@ -119,6 +126,34 @@ def get_race_participants(request, race_id: int, bib_number: int = None):
         ).order_by("bib_number")
 
     return participants
+
+
+@router.get(
+    "/{race_id}/participants_download",
+    tags=["participant", "races"],
+    response={200: List[DownloadInfoParticipantSchema]},
+)
+def get_race_participant_download_info(request, race_id: int, active: bool = False):
+    participants = Participant.objects.for_race_id(race_id=race_id)
+
+    if active:
+        participants = participants.active()
+
+    return 200, participants
+
+
+@router.get(
+    "/{race_id}/Relay_team_download",
+    tags=["participant", "races"],
+    response={200: List[DownloadInfoRelayTeamSchema]},
+)
+def get_race_relay_team_download_info(request, race_id: int, active: bool = False):
+    relay_teams = RelayTeam.objects.for_race_id(race_id=race_id)
+
+    if active:
+        relay_teams = relay_teams.active()
+
+    return 200, relay_teams
 
 
 @router.patch(
