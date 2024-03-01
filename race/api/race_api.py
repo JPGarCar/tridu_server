@@ -43,7 +43,11 @@ def create_race(request, race_schema: CreateRaceSchema):
     "/{race_id}/heats", tags=["heats", "races"], response={200: List[HeatSchema]}
 )
 def get_race_heats(request, race_id: int, race_type_id: int = None):
-    heats = Heat.objects.filter(race_id=race_id).select_related("race", "race_type")
+    heats = (
+        Heat.objects.filter(race_id=race_id)
+        .select_related("race", "race_type")
+        .order_by("race_type__name", "termination")
+    )
 
     if race_type_id:
         heats = heats.for_race_type(race_type_id)
