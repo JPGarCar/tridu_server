@@ -34,49 +34,46 @@ def auto_schedule_heats(race_id: int) -> None:
         .all()
     )
 
-    with transaction.atomic():
-        Participant.objects.for_race_id(race_id=race_id).update(heat=None)
-        RelayTeam.objects.for_race_id(race_id=race_id).update(heat=None)
+    Participant.objects.for_race_id(race_id=race_id).update(heat=None)
+    RelayTeam.objects.for_race_id(race_id=race_id).update(heat=None)
 
-        race_type: RaceType
-        for race_type in RaceType.objects.for_race(race_id=race_id).distinct():
-            race_type_heats = filter(
-                lambda _heat: _heat.race_type_id == race_type.id, heats
+    race_type: RaceType
+    for race_type in RaceType.objects.for_race(race_id=race_id).distinct():
+        race_type_heats = filter(
+            lambda _heat: _heat.race_type_id == race_type.id, heats
+        )
+        total_count = 0
+        for heat in list(race_type_heats):
+            participant_ids = (
+                Participant.objects.for_race_id(race_id)
+                .active()
+                .filter(race_type_id=race_type.id, heat__isnull=True)
+                .order_by("-swim_time")[: total_count + heat.ideal_capacity]
+                .values_list("id", flat=True)
             )
-            total_count = 0
-            for heat in list(race_type_heats):
-                participant_ids = (
-                    Participant.objects.for_race_id(race_id)
-                    .active()
-                    .filter(race_type_id=race_type.id)
-                    .order_by("-swim_time")[
-                        total_count : total_count + heat.ideal_capacity
-                    ]
-                    .values_list("id", flat=True)
-                )
 
-                relay_team_ids = (
-                    RelayTeam.objects.for_race_id(race_id)
-                    .active()
-                    .filter(race_type_id=race_type.id)[
-                        total_count : total_count + heat.ideal_capacity
-                    ]
-                    .values_list("id", flat=True)
-                )
+            relay_team_ids = (
+                RelayTeam.objects.for_race_id(race_id)
+                .active()
+                .filter(race_type_id=race_type.id, heat__isnull=True)[
+                    : total_count + heat.ideal_capacity
+                ]
+                .values_list("id", flat=True)
+            )
 
-                if len(participant_ids) != 0 and len(relay_team_ids) != 0:
-                    raise AutoSchedulerException(
-                        "Participants and Relay Teams found for {} type".format(
-                            race_type.__str__()
-                        )
+            if len(participant_ids) != 0 and len(relay_team_ids) != 0:
+                raise AutoSchedulerException(
+                    "Participants and Relay Teams found for {} type".format(
+                        race_type.__str__()
                     )
+                )
 
-                if len(participant_ids) > 0:
-                    Participant.objects.filter(id__in=participant_ids).update(heat=heat)
-                elif len(relay_team_ids) > 0:
-                    RelayTeam.objects.filter(id__in=relay_team_ids).update(heat=heat)
+            if len(participant_ids) > 0:
+                Participant.objects.filter(id__in=participant_ids).update(heat=heat)
+            elif len(relay_team_ids) > 0:
+                RelayTeam.objects.filter(id__in=relay_team_ids).update(heat=heat)
 
-                total_count += heat.ideal_capacity
+            total_count += heat.ideal_capacity
 
 
 def check_auto_schedule_is_ready(race_id: int) -> List[str]:
