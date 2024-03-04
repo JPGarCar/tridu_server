@@ -1,7 +1,7 @@
 from typing import List
 
 from django.db import transaction
-from django.db.models import Count, Sum, Q
+from django.db.models import Count, Sum, Q, F
 
 from heats.models import Heat
 from participants.models import Participant, RelayTeam
@@ -29,13 +29,17 @@ def auto_schedule_heats(race_id: int) -> None:
 
     heats = (
         Heat.objects.for_race(race_id=race_id)
-        .order_by("start_datetime")
+        .order_by("start_datetime__hour", "start_datetime__minute")
         .distinct()
         .all()
     )
 
     Participant.objects.for_race_id(race_id=race_id).update(heat=None)
     RelayTeam.objects.for_race_id(race_id=race_id).update(heat=None)
+
+    Participant.objects.for_race_id(
+        race_id=race_id
+    ).active().with_invalid_swim_time().update(swim_time=None)
 
     race_type: RaceType
     for race_type in RaceType.objects.for_race(race_id=race_id).distinct():
@@ -48,7 +52,7 @@ def auto_schedule_heats(race_id: int) -> None:
                 Participant.objects.for_race_id(race_id)
                 .active()
                 .filter(race_type_id=race_type.id, heat__isnull=True)
-                .order_by("-swim_time")[: heat.ideal_capacity]
+                .order_by(F("swim_time").desc(nulls_first=True))[: heat.ideal_capacity]
                 .values_list("id", flat=True)
             )
 
