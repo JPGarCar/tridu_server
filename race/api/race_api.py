@@ -1,6 +1,6 @@
 from typing import List
 
-from django.db.models import Min, Max, Count
+from django.db.models import Min, Max, Count, Q
 from ninja import Router
 from ninja.pagination import paginate
 
@@ -319,12 +319,22 @@ def get_race_bib_info_per_race_type(request, race_id: int):
     bib_info_schema_items: List[RaceTypeBibInfoSchema] = []
 
     for race_type in RaceType.objects.for_race(race_id).annotate(
-        p_smallest_bib=Min("participants__bib_number"),
-        p_largest_bib=Max("participants__bib_number"),
-        p_count=Count("participants__bib_number"),
-        r_smallest_bib=Min("relay_teams__bib_number"),
-        r_largest_bib=Max("relay_teams__bib_number"),
-        r_count=Count("relay_teams__bib_number"),
+        p_smallest_bib=Min(
+            "participants__bib_number", filter=Q(participants__is_active=True)
+        ),
+        p_largest_bib=Max(
+            "participants__bib_number", filter=Q(participants__is_active=True)
+        ),
+        p_count=Count(
+            "participants__bib_number", filter=Q(participants__is_active=True)
+        ),
+        r_smallest_bib=Min(
+            "relay_teams__bib_number", filter=Q(relay_teams__is_active=True)
+        ),
+        r_largest_bib=Max(
+            "relay_teams__bib_number", filter=Q(relay_teams__is_active=True)
+        ),
+        r_count=Count("relay_teams__bib_number", filter=Q(relay_teams__is_active=True)),
     ):
         bib_info_schema_items.append(
             RaceTypeBibInfoSchema(
