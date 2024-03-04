@@ -45,6 +45,12 @@ class CheckinLessRaceTypeSchema(ModelSchema):
         )
 
 
+class DownloadRaceTypeSchema(ModelSchema):
+    class Meta:
+        model = RaceType
+        fields = ("name",)
+
+
 class RaceTypeBibInfoSchema(ModelSchema):
     smallest_bib: int
     largest_bib: int

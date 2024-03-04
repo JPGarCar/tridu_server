@@ -4,9 +4,9 @@ from ninja import ModelSchema, Field
 
 from accounts.schema import UserSchema
 from checkins.schema import CheckInUserBaseSchema
-from heats.schema import HeatSchema
+from heats.schema import HeatSchema, DownloadHeatSchema
 from locations.schema import LocationSchema
-from race.schema import RaceTypeSchema, RaceSchema
+from race.schema import RaceTypeSchema, RaceSchema, DownloadRaceTypeSchema
 
 from participants.models import RelayTeam, RelayParticipant, RelayTeamComment
 
@@ -23,11 +23,12 @@ class RelayTeamSchema(ModelSchema):
 
 
 class DownloadInfoRelayTeamSchema(ModelSchema):
-    race_type: RaceTypeSchema
+    race_type: DownloadRaceTypeSchema
+    heat: DownloadHeatSchema | None = None
 
     class Meta:
         model = RelayTeam
-        fields = ("id", "is_active", "bib_number", "name")
+        fields = ("bib_number", "name")
 
 
 class CreateRelayTeamSchema(ModelSchema):

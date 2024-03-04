@@ -37,5 +37,5 @@ class Heat(models.Model):
 
     def __str__(self):
         return "{} Heat Termination {}".format(
-            self.start_datetime.strftime("%d/%m/%Y, %H:%M"), self.termination
+            self.start_datetime.strftime("%H:%M"), self.termination
         )

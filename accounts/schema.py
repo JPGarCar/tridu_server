@@ -46,3 +46,16 @@ class PatchUserSchema(ModelSchema):
             "gender",
         )
         fields_optional = "__all__"
+
+
+class DownloadUserSchema(ModelSchema):
+
+    class Meta:
+        model = User
+        fields = (
+            "first_name",
+            "last_name",
+            "email",
+            "date_of_birth",
+            "gender",
+        )

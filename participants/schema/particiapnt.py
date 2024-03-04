@@ -4,15 +4,19 @@ from typing import List
 
 from ninja import Field, ModelSchema, Schema
 
-from accounts.schema import UserSchema
+from accounts.schema import UserSchema, DownloadUserSchema
 from checkins.schema import CheckInUserBaseSchema
-from heats.schema import HeatSchema
-from locations.schema import LocationSchema
+from heats.schema import HeatSchema, DownloadHeatSchema
+from locations.schema import LocationSchema, DownloadLocationSchema
 from participants.models import (
     Participant,
     ParticipantComment,
 )
-from race.schema import RaceSchema, RaceTypeSchema, CheckinLessRaceTypeSchema
+from race.schema import (
+    RaceSchema,
+    RaceTypeSchema,
+    DownloadRaceTypeSchema,
+)
 
 
 class ParticipationSchema(Schema):
@@ -60,23 +64,24 @@ class ParticipantSchema(ModelSchema):
 
 
 class DownloadInfoParticipantSchema(ModelSchema):
-    origin: LocationSchema | None = None
-    race_type: CheckinLessRaceTypeSchema
-    user: UserSchema
+    origin: DownloadLocationSchema | None = None
+    race_type: DownloadRaceTypeSchema
+    user: DownloadUserSchema
+    heat: DownloadHeatSchema | None = None
+    swim_time: str | None = None
+
+    @staticmethod
+    def resolve_swim_time(obj: Participant) -> str:
+        return str(obj.swim_time)
 
     class Meta:
         model = Participant
         fields = (
-            "id",
             "bib_number",
-            "is_ftt",
             "team",
-            "swim_time",
-            "is_active",
             "location",
-            "waiver_signed",
         )
-        fields_optional = ("team", "swim_time", "location")
+        fields_optional = ("team", "location")
 
 
 class CreateParticipantSchema(ModelSchema):
