@@ -134,7 +134,11 @@ def get_race_participants(
     response={200: List[DownloadInfoParticipantSchema]},
 )
 def get_race_participant_download_info(request, race_id: int, active: bool = False):
-    participants = Participant.objects.for_race_id(race_id=race_id)
+    participants = (
+        Participant.objects.for_race_id(race_id=race_id)
+        .select_all_related()
+        .order_by("heat__start_datetime__hour", "heat__start_datetime__minute")
+    )
 
     if active:
         participants = participants.active()

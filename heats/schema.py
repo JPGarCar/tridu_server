@@ -77,7 +77,7 @@ class DownloadHeatSchema(ModelSchema):
 
     @staticmethod
     def resolve_start_time(obj: Heat) -> str:
-        return obj.start_datetime.strftime("%H:%M")
+        return obj.start_datetime.astimezone().strftime("%H:%M")
 
     @staticmethod
     def resolve_avg_swim_time(obj: Heat) -> str:
