@@ -28,7 +28,9 @@ class Heat(models.Model):
     termination = models.CharField(max_length=10)
     start_datetime = models.DateTimeField()
     color = models.CharField(
-        max_length=7, verbose_name="HEX Color Code", help_text="Color hex code with #"
+        max_length=10,
+        verbose_name="HEX Color Code",
+        help_text="Color hex code with 0x including opacity.",
     )
     ideal_capacity = models.IntegerField(default=0)
     pool = models.CharField(

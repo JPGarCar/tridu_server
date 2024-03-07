@@ -3,3 +3,6 @@ db.sqlite3
 .DS_Store
 __pycache__
 venv/
+
+# firebase json key
+wetbags/creds.py
