@@ -41,3 +41,11 @@ class Heat(models.Model):
         return "{} Heat Termination {}".format(
             self.start_datetime.astimezone().strftime("%I:%M %p"), self.termination
         )
+
+    def to_dict(self):
+        return {
+            "category": self.race_type.name,
+            "termination": self.termination,
+            "short_code": "{} {}".format(self.race_type.name, self.termination),
+            "color": self.color,
+        }

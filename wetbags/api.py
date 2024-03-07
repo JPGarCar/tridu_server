@@ -1,10 +1,11 @@
 from django.utils import timezone
 from ninja import Router
 
+from heats.models import Heat
 from participants.models import Participant, RelayTeam
 from tridu_server.schemas import ErrorObjectSchema
 from wetbags.models import Wetbag
-from wetbags.repository import get_wetbag, save_wetbag, update_wetbag
+from wetbags.repository import get_wetbag, save_wetbag, update_wetbag, save_heats
 from wetbags.schemas import WetbagSchema, CreateWetbagSchema, UpdateWetbagSchema
 
 router = Router()
@@ -79,6 +80,17 @@ def update_participant_wetbag(
         )
 
     return 200, wetbag
+
+
+@router.post(
+    "/heats/transfer/{race_id}", tags=["wetbags", "heats"], response={200: int}
+)
+def transfer_heats_to_wetbag_system(request, race_id: int):
+    heats = Heat.objects.for_race(race_id=race_id).all()
+
+    save_heats(heats=heats)
+
+    return 200, len(heats)
 
 
 @router.get(
