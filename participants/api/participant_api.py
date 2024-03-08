@@ -113,7 +113,12 @@ def create_participant_bulk(
 )
 def recently_edited_participants(request, count: int = 5):
     """Returns the most recently edited participants."""
-    return 200, Participant.objects.order_by_most_recently_edited().all()[:count]
+    return (
+        200,
+        Participant.objects.select_all_related()
+        .order_by_most_recently_edited()
+        .all()[:count],
+    )
 
 
 @router.patch(
@@ -124,7 +129,7 @@ def recently_edited_participants(request, count: int = 5):
 def reactivate_participant(request, participant_id: int):
 
     try:
-        participant = Participant.objects.get(id=participant_id)
+        participant = Participant.objects.select_all_related().get(id=participant_id)
         participant.activate()
     except Participant.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
@@ -149,7 +154,7 @@ def change_participant_race_type(
 ):
 
     try:
-        participant = Participant.objects.get(id=participant_id)
+        participant = Participant.objects.select_all_related().get(id=participant_id)
     except Participant.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
             "Participant with id {} does not exist".format(participant_id)
@@ -185,7 +190,7 @@ def change_participant_race_type(
 def change_participant_heat(request, participant_id: int, heat_id: int):
 
     try:
-        participant = Participant.objects.get(id=participant_id)
+        participant = Participant.objects.select_all_related().get(id=participant_id)
     except Participant.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
             "Participant with id {} does not exist".format(participant_id)
@@ -235,7 +240,7 @@ def change_participant_heat(request, participant_id: int, heat_id: int):
 def remove_participant_heat(request, participant_id: int):
 
     try:
-        participant = Participant.objects.get(id=participant_id)
+        participant = Participant.objects.select_all_related().get(id=participant_id)
     except Participant.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
             "Participant with id {} does not exist".format(participant_id)
@@ -264,7 +269,7 @@ def remove_participant_heat(request, participant_id: int):
 def deactivate_participant(request, participant_id: int):
 
     try:
-        participant = Participant.objects.get(id=participant_id)
+        participant = Participant.objects.select_all_related().get(id=participant_id)
     except Participant.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
             "Participant with id {} does not exist".format(participant_id)
@@ -286,14 +291,16 @@ def checkin_participant(
     """By default, it will flip the value, but if value is in URL, set that value."""
 
     try:
-        participant = Participant.objects.get(id=participant_id)
+        participant = Participant.objects.select_all_related().get(id=participant_id)
     except Participant.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
             "Participant with id {} does not exist".format(participant_id)
         )
 
     try:
-        checkin = CheckIn.objects.get(id=checkin_id)
+        checkin = CheckIn.objects.select_related(
+            "depends_on", "depends_on__depends_on", "depends_on__depends_on__depends_on"
+        ).get(id=checkin_id)
     except CheckIn.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
             "CheckIn with id {} does not exist".format(checkin_id)
@@ -345,7 +352,9 @@ def checkin_participant(
     },
 )
 def get_participant_comments(request, participant_id: int):
-    return 200, ParticipantComment.objects.filter(participant_id=participant_id)
+    return 200, ParticipantComment.objects.filter(
+        participant_id=participant_id
+    ).select_related("writer")
 
 
 @router.post(
@@ -380,7 +389,7 @@ def create_participant_comment(
 )
 def get_participant(request, participant_id: int):
     try:
-        return 200, Participant.objects.get(id=participant_id)
+        return 200, Participant.objects.select_all_related().get(id=participant_id)
     except Participant.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
             "Participant with id {} does not exist".format(participant_id)
@@ -396,7 +405,7 @@ def update_participant(
     request, participant_id: int, participant_schema: PatchParticipantSchema
 ):
     try:
-        participant = Participant.objects.get(id=participant_id)
+        participant = Participant.objects.select_all_related().get(id=participant_id)
     except Participant.DoesNotExist:
         return 404, ErrorObjectSchema.from_404_error(
             "Participant with id {} does not exist".format(participant_id)

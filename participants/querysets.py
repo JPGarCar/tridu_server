@@ -64,7 +64,15 @@ class ParticipantQuerySet(BaseParticipantQuerySet):
         )
 
     def select_all_related(self) -> ParticipantQuerySet:
-        return self.select_related("origin", "race", "race_type", "user", "heat")
+        return self.select_related(
+            "origin",
+            "race",
+            "race_type",
+            "user",
+            "heat",
+            "heat__race_type",
+            "heat__race",
+        )
 
 
 class RelayParticipantQuerySet(BaseParticipantQuerySet):
