@@ -1,10 +1,16 @@
 from typing import List
 
 from django.core.exceptions import ValidationError
+from django.db.models import Count, Q
 from ninja import Router
 
 from checkins.models import CheckIn
-from checkins.schema import CheckInSchema, CreateCheckInSchema, PatchCheckInSchema
+from checkins.schema import (
+    CheckInSchema,
+    CreateCheckInSchema,
+    PatchCheckInSchema,
+    AnalyticsCheckInSchema,
+)
 from race.models import RaceType
 from race.schema import RaceTypeSchema
 from tridu_server.schemas import ErrorObjectSchema
@@ -42,6 +48,50 @@ def create_checkin(request, check_in_schema: CreateCheckInSchema):
         return 201, check_in
     else:
         return 200, check_in
+
+
+@router.get(
+    "/analytics/{race_id}",
+    tags=["checkins"],
+    response={200: List[AnalyticsCheckInSchema]},
+)
+def get_checkin_analytics(request, race_id: int):
+    checkins = CheckIn.objects.annotate(
+        positive_count=Count(
+            "participantcheckin_check_ins",
+            filter=Q(
+                participantcheckin_check_ins__is_checked_in=True,
+                participantcheckin_check_ins__participant__race_id=race_id,
+            ),
+            distinct=True,
+        )
+        + Count(
+            "relayteamcheckin_check_ins",
+            filter=Q(
+                relayteamcheckin_check_ins__is_checked_in=True,
+                relayteamcheckin_check_ins__team__race_id=race_id,
+            ),
+            distinct=True,
+        ),
+        negative_count=Count(
+            "participantcheckin_check_ins",
+            filter=Q(
+                participantcheckin_check_ins__is_checked_in=False,
+                participantcheckin_check_ins__participant__race_id=race_id,
+            ),
+            distinct=True,
+        )
+        + Count(
+            "relayteamcheckin_check_ins",
+            filter=Q(
+                relayteamcheckin_check_ins__is_checked_in=False,
+                relayteamcheckin_check_ins__team__race_id=race_id,
+            ),
+            distinct=True,
+        ),
+    )
+
+    return 200, checkins
 
 
 @router.get(

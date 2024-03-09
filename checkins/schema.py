@@ -43,3 +43,15 @@ class CheckInUserBaseSchema(ModelSchema):
             "is_checked_in",
             "date_changed",
         )
+
+
+class AnalyticsCheckInSchema(ModelSchema):
+    positive_count: int
+    negative_count: int
+
+    class Meta:
+        model = CheckIn
+        fields = (
+            "id",
+            "name",
+        )
