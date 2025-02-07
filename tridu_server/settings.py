@@ -15,7 +15,9 @@ from datetime import timedelta
 from os.path import join
 from pathlib import Path
 
+import sentry_sdk
 from dotenv import load_dotenv
+from sentry_sdk.integrations import DjangoIntegration
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -188,3 +190,13 @@ if os.environ.get("SECURE_PROXY_HEADER", None) and os.environ.get(
     CSRF_COOKIE_NAME = "__Secure-csrftoken"
     SESSION_COOKIE_SAMESITE = "None"
     CSRF_COOKIE_SAMESITE = "None"
+
+
+# Sentry
+if os.environ.get("SENTRY_URL", None):
+    sentry_sdk.init(
+        dsn=os.environ.get("SENTRY_URL"),
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=os.environ.get("SENTRY_TRACE_RATE", 0.25),
+        send_default_pii=bool(int(os.environ.get("SENTRY_IIP", 0))),
+    )
