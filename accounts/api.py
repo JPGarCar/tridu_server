@@ -178,11 +178,19 @@ def create_user_participant(
     origin = None
     if "origin" in data:
         origin_data = data.pop("origin")
-        origin = Location.objects.get(
-            country=origin_data["country"],
-            province=origin_data["province"],
-            city=origin_data["city"],
-        )
+        country = origin_data["country"]
+        province = origin_data["province"]
+        city = origin_data["city"]
+
+        if country and province and city:
+            try:
+                origin = Location.objects.get(
+                    country=country, province=province, city=city
+                )
+            except Location.DoesNotExist:
+                origin = None
+        else:
+            origin = None
 
     try:
         participant = Participant(
