@@ -183,12 +183,9 @@ def create_user_participant(
         city = origin_data["city"]
 
         if country and province and city:
-            try:
-                origin = Location.objects.get(
-                    country=country, province=province, city=city
-                )
-            except Location.DoesNotExist:
-                origin = None
+            origin = Location.objects.get_or_create(
+                country=country, province=province, city=city
+            )
         else:
             origin = None
 
